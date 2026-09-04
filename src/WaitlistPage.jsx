@@ -45,6 +45,7 @@ function WaitlistPage() {
             muted
             loop
             playsInline
+            controls          // 👈 shows play/pause, volume, fullscreen
             preload="metadata"
             poster="/images/clogspreview-poster.jpg"
           >

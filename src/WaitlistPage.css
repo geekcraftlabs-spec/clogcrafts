@@ -19,6 +19,7 @@
   text-align: center;
 }
 
+/* ---- Brand + Animated Subtitle ---- */
 .brand h1 {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 2.8rem;
@@ -33,10 +34,44 @@
   font-size: 0.9rem;
   letter-spacing: 3px;
   text-transform: uppercase;
-  margin-bottom: 30px;
+  margin-bottom: 6px;
 }
 
-/* --- Video / Poster container --- */
+/* Animated subtitle – "Join our waitlist" */
+.animated-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ff4f98;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: pulseGlow 2.5s ease-in-out infinite;
+  letter-spacing: 1px;
+}
+.animated-subtitle span {
+  display: inline-block;
+  animation: sparkle 2s infinite alternate;
+}
+.animated-subtitle span:first-child {
+  animation-delay: 0.2s;
+}
+.animated-subtitle span:last-child {
+  animation-delay: 0.7s;
+}
+
+@keyframes pulseGlow {
+  0% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); text-shadow: 0 0 20px rgba(255,79,152,0.3); }
+  100% { opacity: 0.7; transform: scale(1); }
+}
+@keyframes sparkle {
+  0% { transform: scale(1) rotate(0deg); }
+  100% { transform: scale(1.2) rotate(20deg); }
+}
+
+/* ---- Video Wrapper (poster + video) ---- */
 .video-wrapper {
   max-width: 360px;
   margin: 0 auto 24px;
@@ -48,11 +83,12 @@
 .video-wrapper video {
   width: 100%;
   height: auto;
-  aspect-ratio: 9 / 16;        /* matches your poster (591:1280 ≈ 9:16) */
-  object-fit: cover;           /* crops image to fill container */
+  aspect-ratio: 9 / 16;        /* matches your poster ratio */
+  object-fit: cover;
   display: block;
 }
 
+/* ---- Waitlist form ---- */
 .waitlist-card h2 {
   font-size: 1.8rem;
   font-weight: 600;
@@ -108,6 +144,7 @@
   font-size: 0.8rem;
   color: #bbb;
 }
+
 .success .checkmark {
   font-size: 4rem;
   margin-bottom: 10px;

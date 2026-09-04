@@ -31,15 +31,21 @@ function WaitlistPage() {
   return (
     <div className="waitlist-page">
       <div className="waitlist-card">
+        {/* Brand with animated subtitle */}
         <div className="brand">
           <h1>CLOG <span>CRAFTS</span></h1>
           <p className="tagline">Custom clogs, handcrafted for you.</p>
+          <div className="animated-subtitle">
+            <span>✨</span> Join our waitlist <span>✨</span>
+          </div>
         </div>
 
-        {/* Video with poster – poster controlled by CSS */}
+        {/* Video – autoplay muted loop */}
         <div className="video-wrapper">
           <video
-            controls
+            autoPlay
+            muted
+            loop
             playsInline
             poster="/images/clogspreview-poster.jpg"
           >

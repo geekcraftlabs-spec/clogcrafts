@@ -1,7 +1,5 @@
-/* eslint-disable no-unused-vars */
 import { useState } from 'react';
 import './WaitlistPage.css';
-import videoFile from '/videos/clogspreview.mp4'; // or use a direct path
 
 function WaitlistPage() {
   const [whatsapp, setWhatsapp] = useState('');
@@ -38,16 +36,16 @@ function WaitlistPage() {
           <p className="tagline">Custom clogs, handcrafted for you.</p>
         </div>
 
-        {/* ---- Video Preview ---- */}
-        <div className="video-container">
+        {/* Video with poster – poster controlled by CSS */}
+        <div className="video-wrapper">
           <video
-            src="/videos/clogspreview.mp4"
-            poster="/images/clogspreview-poster.jpg" // optional: poster image
             controls
             playsInline
-            muted
-            preload="metadata"
-          />
+            poster="/images/clogspreview-poster.jpg"
+          >
+            <source src="/clogspreview.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         </div>
 
         {submitted ? (

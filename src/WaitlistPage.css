@@ -36,6 +36,23 @@
   margin-bottom: 30px;
 }
 
+/* --- Video / Poster container --- */
+.video-wrapper {
+  max-width: 360px;
+  margin: 0 auto 24px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f0ece9;
+}
+
+.video-wrapper video {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 9 / 16;        /* matches your poster (591:1280 ≈ 9:16) */
+  object-fit: cover;           /* crops image to fill container */
+  display: block;
+}
+
 .waitlist-card h2 {
   font-size: 1.8rem;
   font-weight: 600;

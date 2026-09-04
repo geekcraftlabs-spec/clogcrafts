@@ -42,7 +42,7 @@ function WaitlistPage() {
         <div className="video-container">
           <video
             src="/videos/clogspreview.mp4"
-            poster="/videos/clogspreview-poster.jpg" // optional: poster image
+            poster="/images/clogspreview-poster.jpg" // optional: poster image
             controls
             playsInline
             muted

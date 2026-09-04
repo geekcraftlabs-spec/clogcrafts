@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './WaitlistPage.css';
+import videoFile from '/videos/clogspreview.mp4'; // or use a direct path
 
 function WaitlistPage() {
   const [whatsapp, setWhatsapp] = useState('');
@@ -24,6 +25,7 @@ function WaitlistPage() {
         setError(data.error || 'Something went wrong');
       }
     } catch (err) {
+      console.error('Waitlist signup error:', err);
       setError('Network error. Please try again.');
     }
   };
@@ -34,6 +36,18 @@ function WaitlistPage() {
         <div className="brand">
           <h1>CLOG <span>CRAFTS</span></h1>
           <p className="tagline">Custom clogs, handcrafted for you.</p>
+        </div>
+
+        {/* ---- Video Preview ---- */}
+        <div className="video-container">
+          <video
+            src="/videos/clogspreview.mp4"
+            poster="/videos/clogspreview-poster.jpg" // optional: poster image
+            controls
+            playsInline
+            muted
+            preload="metadata"
+          />
         </div>
 
         {submitted ? (

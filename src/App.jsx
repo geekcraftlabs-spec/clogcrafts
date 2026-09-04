@@ -2,6 +2,7 @@
 /* eslint-disable no-useless-assignment */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './index.css';
+import WaitlistPage from './WaitlistPage';
 
 // ============================================================
 // IMPORT PATCH IMAGES
@@ -76,7 +77,19 @@ const INITIALS_COLORS = ['#d4a574', '#c0c0c0', '#111', '#ff4f98', '#ffffff'];
 // MAIN APP
 // ============================================================
 function App() {
-  // ---- State ----
+  // ---- Page routing ----
+  const [currentPage, setCurrentPage] = useState('studio');
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/waitlist') {
+      setCurrentPage('waitlist');
+    } else {
+      setCurrentPage('studio');
+    }
+  }, []);
+
+  // ---- Studio State ----
   const [studioDropdown, setStudioDropdown] = useState(false);
   const [step, setStep] = useState(1);
   const [color, setColor] = useState(COLORS[0]);
@@ -322,7 +335,6 @@ function App() {
       return;
     }
 
-    // Check if adding these letters would exceed MAX_ITEMS
     if (mainPatches.length + addons.length + validLetters.length > MAX_ITEMS) {
       alert(`Max ${MAX_ITEMS} items total. You have ${mainPatches.length + addons.length} items already.`);
       return;
@@ -382,7 +394,7 @@ function App() {
     }
   };
 
-  // ---- Size & rotation controls (for all types) ----
+  // ---- Size & rotation controls ----
   const changeItemSize = (type, index, delta) => {
     const step = 0.02;
     const setter = type === 'main' ? setMainPatches : type === 'addon' ? setAddons : setLetterPatches;
@@ -512,15 +524,12 @@ function App() {
     setDragTarget(null);
   };
 
-  // ============================================================
-  // PRICING LOGIC (UPDATED)
-  // ============================================================
+  // ---- Pricing ----
   const getReview = () => {
     const mainCount = mainPatches.length;
     const addonCount = addons.length;
     const letterCount = letterPatches.length;
 
-    // Main patches price (tiered)
     let mainPrice = 0;
     if (mainCount === 0) {
       mainPrice = 0;
@@ -532,7 +541,6 @@ function App() {
       mainPrice = mainCount * 35;
     }
 
-    // Add-ons price (tiered)
     let addonTotal = 0;
     if (addonCount > 0) {
       if (addonCount >= 3) {
@@ -543,22 +551,19 @@ function App() {
       }
     }
 
-    // Letters price (no tier cap)
     let letterPrice = 0;
     if (letterCount > 0) {
       const perLetter = mainCount > 0 ? 10 : 30;
       letterPrice = letterCount * perLetter;
     }
 
-    // Initials price
     const initialsPrice = initials.length > 0 ? 5 : 0;
-
     const total = BASE_PRICE + color.price + mainPrice + addonTotal + letterPrice + initialsPrice;
 
     return { mainPrice, addonTotal, letterPrice, initialsPrice, total };
   };
 
-  // ---- Capture and preview screenshot ----
+  // ---- Screenshot preview ----
   const previewScreenshot = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -567,7 +572,7 @@ function App() {
     setShowScreenshot(true);
   };
 
-  // ---- Upload to Cloudinary (client-side) ----
+  // ---- Upload to Cloudinary ----
   const uploadToCloudinary = async (dataURL) => {
     const formData = new FormData();
     formData.append('file', dataURL);
@@ -584,9 +589,8 @@ function App() {
     return data.secure_url;
   };
 
-  // ---- Place Order (with Cloudinary upload + API call) ----
+  // ---- Place Order ----
   const placeOrder = async () => {
-    // 1. Validate WhatsApp
     if (!whatsapp || !whatsappConfirm) {
       alert('Please enter your WhatsApp number and confirm it.');
       return;
@@ -603,11 +607,9 @@ function App() {
 
     if (!confirm('Are you sure this is your final design? You can still change it before we start crafting.')) return;
 
-    // 2. Capture canvas
     const canvas = canvasRef.current;
     const dataURL = canvas.toDataURL('image/png');
 
-    // 3. Upload to Cloudinary
     let screenshotUrl;
     try {
       screenshotUrl = await uploadToCloudinary(dataURL);
@@ -617,7 +619,6 @@ function App() {
       return;
     }
 
-    // 4. Build order payload
     const orderData = {
       mode: 'studio',
       color: color.name,
@@ -630,7 +631,6 @@ function App() {
       screenshotUrl: screenshotUrl,
     };
 
-    // 5. Send to API
     try {
       const response = await fetch('/api/save-order', {
         method: 'POST',
@@ -870,7 +870,6 @@ function App() {
                     </label>
                   </div>
 
-                  {/* ---- Show letter patches with individual controls ---- */}
                   {fontStyle === 'bubble' && letterPatches.length > 0 && (
                     <div style={{marginTop:15}}>
                       <p style={{fontSize:13,color:'#666'}}>
@@ -952,6 +951,10 @@ function App() {
   };
 
   // ---- Render ----
+  if (currentPage === 'waitlist') {
+    return <WaitlistPage />;
+  }
+
   return (
     <>
       <nav>
@@ -985,7 +988,6 @@ function App() {
         </div>
       )}
 
-      {/* Screenshot Modal */}
       {showScreenshot && screenshotData && (
         <div className="screenshot-modal" onClick={() => setShowScreenshot(false)}>
           <div className="screenshot-modal-content" onClick={(e) => e.stopPropagation()}>

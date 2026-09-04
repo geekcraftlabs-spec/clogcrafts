@@ -31,13 +31,14 @@ import diamondBlueCartoon from './assets/images/patches/diamond-blue-cartoon.jpg
 const BASE_PRICE = 240;
 const MAX_ITEMS = 12;
 
+// ✅ Fixed: paths now point to /images/base/ (public folder)
 const COLORS = [
-  { id: 'black', name: 'Black', hex: '#2a2a2a', price: 0, frontImg: '/src/assets/images/base/black-front.jpg', sideImg: '/src/assets/images/base/black-side.jpg' },
-  { id: 'brown', name: 'Brown', hex: '#8B4513', price: 0, frontImg: '/src/assets/images/base/brown-front.jpg', sideImg: '/src/assets/images/base/brown-side.jpg' },
-  { id: 'beige', name: 'Beige', hex: '#e8d5c4', price: 0, frontImg: '/src/assets/images/base/beige-front.jpg', sideImg: '/src/assets/images/base/beige-side.jpg' },
-  { id: 'chantilly', name: 'Chantilly', hex: '#f5efe6', price: 0, frontImg: '/src/assets/images/base/chantilly-front.jpg', sideImg: '/src/assets/images/base/chantilly-side.jpg' },
-  { id: 'grey', name: 'Grey', hex: '#a0a0a0', price: 0, frontImg: '/src/assets/images/base/grey-arialview.jpg', sideImg: '/src/assets/images/base/grey-side.jpg' },
-  { id: 'mocha', name: 'Mocha Brown', hex: '#8B5A3C', price: 0, frontImg: '/src/assets/images/base/mocha-brown-arial.jpg', sideImg: '/src/assets/images/base/mocha-brown-arial.jpg' },
+  { id: 'black', name: 'Black', hex: '#2a2a2a', price: 0, frontImg: '/images/base/black-front.jpg', sideImg: '/images/base/black-side.jpg' },
+  { id: 'brown', name: 'Brown', hex: '#8B4513', price: 0, frontImg: '/images/base/brown-front.jpg', sideImg: '/images/base/brown-side.jpg' },
+  { id: 'beige', name: 'Beige', hex: '#e8d5c4', price: 0, frontImg: '/images/base/beige-front.jpg', sideImg: '/images/base/beige-side.jpg' },
+  { id: 'chantilly', name: 'Chantilly', hex: '#f5efe6', price: 0, frontImg: '/images/base/chantilly-front.jpg', sideImg: '/images/base/chantilly-side.jpg' },
+  { id: 'grey', name: 'Grey', hex: '#a0a0a0', price: 0, frontImg: '/images/base/grey-arialview.jpg', sideImg: '/images/base/grey-side.jpg' },
+  { id: 'mocha', name: 'Mocha Brown', hex: '#8B5A3C', price: 0, frontImg: '/images/base/mocha-brown-arial.jpg', sideImg: '/images/base/mocha-brown-arial.jpg' },
 ];
 
 const MAIN_PATCHES = [
@@ -142,7 +143,7 @@ function App() {
       ctx.fillStyle = '#999';
       ctx.font = '18px Poppins';
       ctx.textAlign = 'center';
-      ctx.fillText('Place your image in src/assets/images/base/', w/2, h/2);
+      ctx.fillText('Place your image in /images/base/', w/2, h/2);
     }
 
     const drawItem = (item, defs) => {
@@ -566,8 +567,26 @@ function App() {
     setShowScreenshot(true);
   };
 
-  // ---- Place Order ----
-  const placeOrder = () => {
+  // ---- Upload to Cloudinary (client-side) ----
+  const uploadToCloudinary = async (dataURL) => {
+    const formData = new FormData();
+    formData.append('file', dataURL);
+    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: formData }
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Cloudinary upload failed');
+    }
+    const data = await response.json();
+    return data.secure_url;
+  };
+
+  // ---- Place Order (with Cloudinary upload + API call) ----
+  const placeOrder = async () => {
+    // 1. Validate WhatsApp
     if (!whatsapp || !whatsappConfirm) {
       alert('Please enter your WhatsApp number and confirm it.');
       return;
@@ -584,10 +603,22 @@ function App() {
 
     if (!confirm('Are you sure this is your final design? You can still change it before we start crafting.')) return;
 
+    // 2. Capture canvas
     const canvas = canvasRef.current;
     const dataURL = canvas.toDataURL('image/png');
 
-    const order = {
+    // 3. Upload to Cloudinary
+    let screenshotUrl;
+    try {
+      screenshotUrl = await uploadToCloudinary(dataURL);
+    } catch (err) {
+      alert('Failed to upload your design image. Please try again.');
+      console.error('Cloudinary upload error:', err);
+      return;
+    }
+
+    // 4. Build order payload
+    const orderData = {
       mode: 'studio',
       color: color.name,
       mainPatches: mainPatches.map(p => MAIN_PATCHES.find(pp => pp.id === p.id)?.name || p.id),
@@ -595,20 +626,30 @@ function App() {
       letterPatches: letterPatches.map(p => allLetterPatches.find(pp => pp.id === p.id)?.name || p.id),
       initials: initials || 'None',
       fontStyle: fontStyle,
-      whatsapp: whatsapp,
-      screenshot: dataURL,
-      status: 'pending',
-      timestamp: new Date().toISOString()
+      whatsapp: cleaned,
+      screenshotUrl: screenshotUrl,
     };
 
-    console.log('Order placed:', order);
-    alert('🎉 Your custom clog order has been placed!\n\nWe will contact you via WhatsApp to confirm the details and arrange payment.\n\nOrder summary:\n' +
-      `Colour: ${order.color}\n` +
-      `Patches: ${order.mainPatches.join(', ') || 'None'}\n` +
-      `Add-ons: ${order.addons.join(', ') || 'None'}\n` +
-      `Letters: ${order.letterPatches.join(', ') || 'None'}\n` +
-      `Initials: ${order.initials}\n` +
-      `WhatsApp: ${order.whatsapp}`);
+    // 5. Send to API
+    try {
+      const response = await fetch('/api/save-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      });
+      const result = await response.json();
+      if (result.success) {
+        const designUrl = `${window.location.origin}/design/${result.shortCode}`;
+        alert(
+          `🎉 Your custom clog order has been placed!\n\nOrder code: ${result.shortCode}\n\nWe will contact you via WhatsApp to confirm the details and arrange payment.\n\nView your design: ${designUrl}`
+        );
+      } else {
+        alert('Something went wrong. Please try again.');
+      }
+    } catch (err) {
+      console.error('Order error:', err);
+      alert('Network error. Please try again.');
+    }
   };
 
   // ---- Render selected badge ----

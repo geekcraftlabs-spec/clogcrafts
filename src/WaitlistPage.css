@@ -83,8 +83,8 @@
 .video-wrapper video {
   width: 100%;
   height: auto;
-  aspect-ratio: 9 / 16;        /* matches your poster ratio */
-  object-fit: cover;
+  aspect-ratio: 9 / 16;
+  object-fit: contain;   /* shows the whole poster/video without cropping */
   display: block;
 }
 

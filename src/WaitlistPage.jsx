@@ -31,7 +31,6 @@ function WaitlistPage() {
   return (
     <div className="waitlist-page">
       <div className="waitlist-card">
-        {/* Brand with animated subtitle */}
         <div className="brand">
           <h1>CLOG <span>CRAFTS</span></h1>
           <p className="tagline">Custom clogs, handcrafted for you.</p>
@@ -40,16 +39,16 @@ function WaitlistPage() {
           </div>
         </div>
 
-        {/* Video – autoplay muted loop */}
         <div className="video-wrapper">
           <video
             autoPlay
             muted
             loop
             playsInline
+            preload="metadata"
             poster="/images/clogspreview-poster.jpg"
           >
-            <source src="/clogspreview.mp4" type="video/mp4" />
+            <source src="/videos/clogspreview.mp4" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         </div>

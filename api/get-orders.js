@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   try {
     const orders = await sql`
-      SELECT * FROM orders
+      SELECT * FROM clogcrafts.orders
       WHERE project = 'clogcrafts'
       ORDER BY created_at DESC
     `;

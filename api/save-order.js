@@ -4,7 +4,7 @@ import { neon } from '@neondatabase/serverless';
 const sql = neon(process.env.DATABASE_URL);
 
 const generateShortCode = async () => {
-  const result = await sql`SELECT COUNT(*) FROM orders WHERE project = 'clogcrafts'`;
+  const result = await sql`SELECT COUNT(*) FROM clogcrafts.orders WHERE project = 'clogcrafts'`;
   const count = parseInt(result[0].count) + 1;
   return `CLOG-${String(count).padStart(3, '0')}`;
 };
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
   try {
     await sql`
-      INSERT INTO orders (
+      INSERT INTO clogcrafts.orders (
         short_code,
         mode,
         customer_name,

@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   try {
     const entries = await sql`
-      SELECT * FROM waitlist
+      SELECT * FROM clogcrafts.waitlist
       WHERE project = 'clogcrafts'
       ORDER BY created_at DESC
     `;

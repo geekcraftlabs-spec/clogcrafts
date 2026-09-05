@@ -1,11 +1,11 @@
-﻿/* eslint-disable no-unused-vars */
-/* eslint-disable react-hooks/set-state-in-effect */
+﻿/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-useless-assignment */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './index.css';
 import WaitlistPage from './WaitlistPage';
 import Dashboard from './Dashboard';
 import HomePage from './HomePage';
+import StorePage from './StorePage';
 
 // ============================================================
 // IMPORT PATCH IMAGES
@@ -84,15 +84,12 @@ function App() {
 
   useEffect(() => {
     const path = window.location.pathname;
-    if (path === '/waitlist') {
-      setCurrentPage('waitlist');
-    } else if (path === '/staff' || path === '/dashboard') {
-      setCurrentPage('dashboard');
-    } else if (path === '/studio') {
-      setCurrentPage('studio');
-    } else {
-      setCurrentPage('home');
-    }
+    if (path === '/waitlist') setCurrentPage('waitlist');
+    else if (path === '/staff' || path === '/dashboard') setCurrentPage('dashboard');
+    else if (path === '/studio') setCurrentPage('studio');
+    else if (path === '/store') setCurrentPage('store');
+    else if (path === '/upload') setCurrentPage('upload'); // placeholder
+    else setCurrentPage('home');
   }, []);
 
   // ---- Studio State ----
@@ -950,16 +947,44 @@ function App() {
   // ---- Render ----
   if (currentPage === 'waitlist') return <WaitlistPage />;
   if (currentPage === 'dashboard') return <Dashboard />;
+  if (currentPage === 'store') return <StorePage />;
   if (currentPage === 'home') return <HomePage />;
+  // Default: Studio (and upload placeholder)
+  if (currentPage === 'upload') {
+    // Placeholder for upload page
+    return (
+      <div style={{ padding: '120px 20px', textAlign: 'center' }}>
+        <h1>📤 Upload Your Design</h1>
+        <p>Coming soon – upload your design idea and we'll craft it for you.</p>
+        <a href="/" className="btn-primary" style={{ display: 'inline-block', marginTop: 20, background: '#ff4f98', color: 'white', padding: '14px 34px', borderRadius: '50px', textDecoration: 'none' }}>← Back to Home</a>
+      </div>
+    );
+  }
 
-  // ---- Studio Page ----
+  // Studio page
   return (
     <>
       <nav>
         <a href="/" className="logo">CLOG CRAFTS</a>
         <ul>
           <li><a href="/">Home</a></li>
-          <li><a href="/studio">Design Studio</a></li>
+          <li
+            className="dropdown"
+            onMouseEnter={() => setStudioDropdown(true)}
+            onMouseLeave={() => setStudioDropdown(false)}
+          >
+            <a
+              href="#"
+              onClick={(e) => { e.preventDefault(); setStudioDropdown(!studioDropdown); }}
+            >
+              Studio <span className="dropdown-arrow">▼</span>
+            </a>
+            <ul className={`dropdown-menu ${studioDropdown ? 'open' : ''}`}>
+              <li><a href="/store">🛍️ Store</a></li>
+              <li><a href="/studio">🛠️ Build Your Own</a></li>
+              <li><a href="/upload">📤 Upload Your Design</a></li>
+            </ul>
+          </li>
           <li><a href="/staff">Staff</a></li>
         </ul>
       </nav>

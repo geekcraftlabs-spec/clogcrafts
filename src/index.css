@@ -1415,3 +1415,13 @@ nav ul li.dropdown {
 .initials-input input {
   max-width: 100%;
 }
+
+.dropdown-arrow {
+  font-size: 0.7rem;
+  margin-left: 4px;
+  display: inline-block;
+  transition: transform 0.2s;
+}
+.dropdown:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}

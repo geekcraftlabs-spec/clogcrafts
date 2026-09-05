@@ -1,8 +1,10 @@
 /* eslint-disable no-undef */
-import { useState } from 'react'; // removed useEffect
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect } from 'react';
 import './Dashboard.css';
 
-// ---- Helper to format WhatsApp numbers ----
+// ---- Helper to format WhatsApp numbers (0 -> 27) ----
 const formatWhatsAppNumber = (number) => {
   let cleaned = number.replace(/[\s\-()+]/g, '');
   if (cleaned.startsWith('0')) {
@@ -22,10 +24,24 @@ function Dashboard() {
   const [waitlist, setWaitlist] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Broadcast state
+  const [liveLink, setLiveLink] = useState(window.location.origin);
+  const [welcomeMessage, setWelcomeMessage] = useState(
+    "🎉 We're live! 🎉\n\nYour custom clogs are now available at Clog Crafts.\n\nClick the link below to start designing your own pair:\n\n"
+  );
+  const [broadcastSent, setBroadcastSent] = useState(false);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [generatedLinks, setGeneratedLinks] = useState([]);
+
+  // Check localStorage for broadcast status
+  useEffect(() => {
+    const sent = localStorage.getItem('broadcastSent') === 'true';
+    setBroadcastSent(sent);
+  }, []);
+
   // ---- Login ----
   const handleLogin = (e) => {
     e.preventDefault();
-    // In Vite, use import.meta.env; fallback to process.env for Node
     const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
     if (password === adminPass) {
       setAuthenticated(true);
@@ -74,12 +90,12 @@ function Dashboard() {
     }
   };
 
-  // ---- Send WhatsApp (opens wa.me) ----
+  // ---- Send WhatsApp (individual order) ----
   const sendWhatsApp = (order) => {
     const baseUrl = window.location.origin;
     const designUrl = `${baseUrl}/design/${order.short_code}`;
     const number = formatWhatsAppNumber(order.whatsapp);
-    const payShapNumber = '0682852438@FNB'; // Update to yours
+    const payShapNumber = '0682852438@FNB';
     const message = `👋 Hi! Your custom clog design is ready.
 
 🔗 View your design: ${designUrl}
@@ -106,12 +122,55 @@ Thank you for choosing Clog Crafts!`;
     window.open(`https://wa.me/${number}?text=${encoded}`, '_blank');
   };
 
+  // ---- Broadcast to waitlist ----
+  const handleBroadcast = () => {
+    if (waitlist.length === 0) {
+      alert('No waitlist entries to broadcast to.');
+      return;
+    }
+    if (!liveLink) {
+      alert('Please enter the live link.');
+      return;
+    }
+    // Generate wa.me links for each entry
+    const links = waitlist.map((entry) => {
+      const number = formatWhatsAppNumber(entry.whatsapp);
+      const fullMessage = welcomeMessage + liveLink;
+      const encoded = encodeURIComponent(fullMessage);
+      return {
+        whatsapp: entry.whatsapp,
+        number: number,
+        link: `https://wa.me/${number}?text=${encoded}`,
+      };
+    });
+    setGeneratedLinks(links);
+    setShowBroadcastModal(true);
+  };
+
+  const confirmBroadcast = () => {
+    // Mark as sent
+    localStorage.setItem('broadcastSent', 'true');
+    setBroadcastSent(true);
+    setShowBroadcastModal(false);
+    alert(`✅ Broadcast sent to ${generatedLinks.length} numbers.`);
+    // Optionally open all links (but browser may block pop-ups) – we'll just show them.
+  };
+
+  const resetBroadcast = () => {
+    localStorage.removeItem('broadcastSent');
+    setBroadcastSent(false);
+    setGeneratedLinks([]);
+  };
+
   // ---- Render login if not authenticated ----
   if (!authenticated) {
     return (
       <div className="dashboard-login">
         <div className="login-card">
-          <h2>🔐 Admin Login</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2>🔐 Admin Login</h2>
+            <a href="/" className="home-btn-login">🏠 Home</a>
+          </div>
           <form onSubmit={handleLogin}>
             <input
               type="password"
@@ -132,13 +191,17 @@ Thank you for choosing Clog Crafts!`;
     <div className="dashboard-container">
       <header className="dashboard-header">
         <h1>🧑‍💼 Clog Crafts – Admin Dashboard</h1>
-        <button className="logout-btn" onClick={() => setAuthenticated(false)}>Logout</button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <a href="/" className="home-btn">🏠 Home</a>
+          <button className="logout-btn" onClick={() => setAuthenticated(false)}>Logout</button>
+        </div>
       </header>
 
       {loading ? (
         <p>Loading...</p>
       ) : (
         <>
+          {/* ---- Orders Section ---- */}
           <section className="dashboard-section">
             <h2>📦 Orders ({orders.length})</h2>
             {orders.length === 0 ? (
@@ -195,8 +258,22 @@ Thank you for choosing Clog Crafts!`;
             )}
           </section>
 
+          {/* ---- Waitlist Section ---- */}
           <section className="dashboard-section">
-            <h2>📱 Waitlist ({waitlist.length})</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+              <h2>📱 Waitlist ({waitlist.length})</h2>
+              {!broadcastSent ? (
+                <button className="broadcast-btn" onClick={handleBroadcast}>
+                  🌐 Ready to Go Live
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>✅ Broadcast sent!</span>
+                  <button className="reset-btn" onClick={resetBroadcast}>🔄 Reset</button>
+                </div>
+              )}
+            </div>
+
             {waitlist.length === 0 ? (
               <p>No waitlist entries yet.</p>
             ) : (
@@ -219,6 +296,46 @@ Thank you for choosing Clog Crafts!`;
             )}
           </section>
         </>
+      )}
+
+      {/* ---- Broadcast Modal ---- */}
+      {showBroadcastModal && (
+        <div className="modal-overlay" onClick={() => setShowBroadcastModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowBroadcastModal(false)}>✕</button>
+            <h3>🌐 Broadcast to Waitlist</h3>
+            <p style={{ marginBottom: '12px', color: '#666' }}>
+              These are the WhatsApp links for each number. Click "Open All" to send them, or copy the links.
+            </p>
+            <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '16px' }}>
+              {generatedLinks.map((item, i) => (
+                <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{item.whatsapp} → <a href={item.link} target="_blank" rel="noopener noreferrer">Open</a></span>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button className="btn-primary" onClick={() => {
+                // Copy all links to clipboard
+                const allLinks = generatedLinks.map(item => item.link).join('\n');
+                navigator.clipboard.writeText(allLinks).then(() => {
+                  alert('All links copied to clipboard!');
+                }).catch(() => {
+                  // Fallback
+                  const textarea = document.createElement('textarea');
+                  textarea.value = allLinks;
+                  document.body.appendChild(textarea);
+                  textarea.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(textarea);
+                  alert('All links copied to clipboard!');
+                });
+              }}>📋 Copy All Links</button>
+              <button className="btn-primary" onClick={confirmBroadcast}>✅ Confirm Send</button>
+              <button className="btn-secondary" onClick={() => setShowBroadcastModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

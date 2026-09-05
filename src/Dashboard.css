@@ -207,3 +207,141 @@
     font-size: 0.85rem;
   }
 }
+
+/* ---- Home button ---- */
+.home-btn {
+  background: #eee;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  color: #111;
+}
+.home-btn:hover {
+  background: #ddd;
+}
+
+/* ---- Login page home button ---- */
+.home-btn-login {
+  background: #f0f0f0;
+  padding: 6px 14px;
+  border-radius: 30px;
+  text-decoration: none;
+  color: #111;
+  font-size: 0.9rem;
+}
+.home-btn-login:hover {
+  background: #ddd;
+}
+
+/* ---- Broadcast button ---- */
+.broadcast-btn {
+  background: #ff4f98;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.broadcast-btn:hover {
+  background: #e6397a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255,79,152,0.3);
+}
+
+.reset-btn {
+  background: #f1c40f;
+  color: #111;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.reset-btn:hover {
+  background: #e0b300;
+}
+
+/* ---- Modal ---- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.2);
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #999;
+}
+.modal-close:hover {
+  color: #111;
+}
+
+.btn-primary {
+  background: #ff4f98;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary:hover {
+  background: #e6397a;
+}
+
+.btn-secondary {
+  background: #eee;
+  color: #111;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: #ddd;
+}
+
+/* ---- Responsive tweaks ---- */
+@media (max-width: 600px) {
+  .modal-content {
+    padding: 20px;
+    margin: 10px;
+  }
+  .broadcast-btn {
+    width: 100%;
+    margin-top: 8px;
+  }
+}

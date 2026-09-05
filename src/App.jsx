@@ -1,9 +1,11 @@
-﻿/* eslint-disable react-hooks/set-state-in-effect */
+﻿/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-useless-assignment */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './index.css';
 import WaitlistPage from './WaitlistPage';
 import Dashboard from './Dashboard';
+import HomePage from './HomePage';
 
 // ============================================================
 // IMPORT PATCH IMAGES
@@ -78,7 +80,7 @@ const INITIALS_COLORS = ['#d4a574', '#c0c0c0', '#111', '#ff4f98', '#ffffff'];
 // ============================================================
 function App() {
   // ---- Page routing ----
-  const [currentPage, setCurrentPage] = useState('studio');
+  const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -86,8 +88,10 @@ function App() {
       setCurrentPage('waitlist');
     } else if (path === '/staff' || path === '/dashboard') {
       setCurrentPage('dashboard');
-    } else {
+    } else if (path === '/studio') {
       setCurrentPage('studio');
+    } else {
+      setCurrentPage('home');
     }
   }, []);
 
@@ -946,29 +950,16 @@ function App() {
   // ---- Render ----
   if (currentPage === 'waitlist') return <WaitlistPage />;
   if (currentPage === 'dashboard') return <Dashboard />;
+  if (currentPage === 'home') return <HomePage />;
 
+  // ---- Studio Page ----
   return (
     <>
       <nav>
-        <a href="#" className="logo" onClick={() => window.location.href = '/'}>CLOG CRAFTS</a>
+        <a href="/" className="logo">CLOG CRAFTS</a>
         <ul>
-          <li><a href="#" className="nav-home">Home</a></li>
-          <li
-            className="dropdown"
-            onMouseEnter={() => setStudioDropdown(true)}
-            onMouseLeave={() => setStudioDropdown(false)}
-          >
-            <a
-              href="#"
-              onClick={(e) => { e.preventDefault(); setStudioDropdown(!studioDropdown); }}
-            >
-              Design Studio ▾
-            </a>
-            <ul className={`dropdown-menu ${studioDropdown ? 'open' : ''}`}>
-              <li><a href="#upload-design">📤 Upload Your Design</a></li>
-              <li><a href="#" style={{color:'#ff4f98', fontWeight:600}}>🛠️ Build Your Own</a></li>
-            </ul>
-          </li>
+          <li><a href="/">Home</a></li>
+          <li><a href="/studio">Design Studio</a></li>
           <li><a href="/staff">Staff</a></li>
         </ul>
       </nav>

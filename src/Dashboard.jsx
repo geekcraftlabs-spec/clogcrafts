@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
 import './Dashboard.css';
 
@@ -27,11 +27,13 @@ function Dashboard() {
   // Broadcast state
   const [liveLink, setLiveLink] = useState(window.location.origin);
   const [welcomeMessage, setWelcomeMessage] = useState(
-    "🎉 We're live! 🎉\n\nYour custom clogs are now available at Clog Crafts.\n\nClick the link below to start designing your own pair:\n\n"
+    "Hey! We're live at Clog Crafts.\nStart designing your custom clogs now:\n"
   );
   const [broadcastSent, setBroadcastSent] = useState(false);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [generatedLinks, setGeneratedLinks] = useState([]);
+  const [isSending, setIsSending] = useState(false);
+  const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
 
   // Check localStorage for broadcast status
   useEffect(() => {
@@ -145,21 +147,64 @@ Thank you for choosing Clog Crafts!`;
     });
     setGeneratedLinks(links);
     setShowBroadcastModal(true);
+    setSendProgress({ current: 0, total: links.length });
   };
 
-  const confirmBroadcast = () => {
-    // Mark as sent
+  // ---- Send All (opens each link sequentially) ----
+  const sendAll = () => {
+    if (generatedLinks.length === 0) return;
+    setIsSending(true);
+    let index = 0;
+    const total = generatedLinks.length;
+
+    const openNext = () => {
+      if (index >= total) {
+        setIsSending(false);
+        localStorage.setItem('broadcastSent', 'true');
+        setBroadcastSent(true);
+        setShowBroadcastModal(false);
+        alert(`✅ All ${total} messages opened. Please click "Send" on each WhatsApp window.`);
+        return;
+      }
+      const item = generatedLinks[index];
+      window.open(item.link, '_blank');
+      setSendProgress({ current: index + 1, total });
+      index++;
+      setTimeout(openNext, 800);
+    };
+
+    openNext();
+  };
+
+  // ---- Copy All Links ----
+  const copyAllLinks = () => {
+    const allLinks = generatedLinks.map(item => item.link).join('\n');
+    navigator.clipboard.writeText(allLinks).then(() => {
+      alert('All links copied to clipboard!');
+    }).catch(() => {
+      const textarea = document.createElement('textarea');
+      textarea.value = allLinks;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('All links copied to clipboard!');
+    });
+  };
+
+  // ---- Confirm Send (just mark as sent) ----
+  const confirmSend = () => {
     localStorage.setItem('broadcastSent', 'true');
     setBroadcastSent(true);
     setShowBroadcastModal(false);
-    alert(`✅ Broadcast sent to ${generatedLinks.length} numbers.`);
-    // Optionally open all links (but browser may block pop-ups) – we'll just show them.
+    alert('✅ Broadcast marked as sent!');
   };
 
   const resetBroadcast = () => {
     localStorage.removeItem('broadcastSent');
     setBroadcastSent(false);
     setGeneratedLinks([]);
+    setIsSending(false);
   };
 
   // ---- Render login if not authenticated ----
@@ -305,35 +350,51 @@ Thank you for choosing Clog Crafts!`;
             <button className="modal-close" onClick={() => setShowBroadcastModal(false)}>✕</button>
             <h3>🌐 Broadcast to Waitlist</h3>
             <p style={{ marginBottom: '12px', color: '#666' }}>
-              These are the WhatsApp links for each number. Click "Open All" to send them, or copy the links.
+              {generatedLinks.length} numbers ready. Choose an action:
             </p>
-            <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '16px' }}>
-              {generatedLinks.map((item, i) => (
-                <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{item.whatsapp} → <a href={item.link} target="_blank" rel="noopener noreferrer">Open</a></span>
+
+            {/* Message preview */}
+            <div style={{ marginBottom: '16px', background: '#f9f9f9', padding: '12px', borderRadius: '8px', fontSize: '0.9rem' }}>
+              <strong>Preview message:</strong>
+              <div style={{ marginTop: '4px', whiteSpace: 'pre-wrap', color: '#444' }}>
+                {welcomeMessage + liveLink}
+              </div>
+              <div style={{ marginTop: '8px', fontSize: '0.8rem', color: '#999' }}>
+                💡 Tip: Avoid emojis for best compatibility on mobile.
+              </div>
+            </div>
+
+            {/* Link list */}
+            <div style={{ maxHeight: '160px', overflowY: 'auto', marginBottom: '16px', background: '#f9f9f9', padding: '8px', borderRadius: '8px' }}>
+              {generatedLinks.slice(0, 5).map((item, i) => (
+                <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #eee', fontSize: '0.85rem' }}>
+                  {item.whatsapp} → <a href={item.link} target="_blank" rel="noopener noreferrer">Open</a>
                 </div>
               ))}
+              {generatedLinks.length > 5 && <div style={{ color: '#999' }}>... and {generatedLinks.length - 5} more</div>}
             </div>
+
+            {/* Progress (if sending) */}
+            {isSending && (
+              <div style={{ marginBottom: '12px' }}>
+                <progress value={sendProgress.current} max={sendProgress.total} style={{ width: '100%' }} />
+                <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                  Opening {sendProgress.current} of {sendProgress.total}...
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <button className="btn-primary" onClick={() => {
-                // Copy all links to clipboard
-                const allLinks = generatedLinks.map(item => item.link).join('\n');
-                navigator.clipboard.writeText(allLinks).then(() => {
-                  alert('All links copied to clipboard!');
-                }).catch(() => {
-                  // Fallback
-                  const textarea = document.createElement('textarea');
-                  textarea.value = allLinks;
-                  document.body.appendChild(textarea);
-                  textarea.select();
-                  document.execCommand('copy');
-                  document.body.removeChild(textarea);
-                  alert('All links copied to clipboard!');
-                });
-              }}>📋 Copy All Links</button>
-              <button className="btn-primary" onClick={confirmBroadcast}>✅ Confirm Send</button>
+              <button className="btn-primary" onClick={sendAll} disabled={isSending}>
+                {isSending ? 'Sending...' : '🚀 Send All (Open Links)'}
+              </button>
+              <button className="btn-secondary" onClick={copyAllLinks}>📋 Copy All Links</button>
+              <button className="btn-secondary" onClick={confirmSend}>✅ Mark as Sent</button>
               <button className="btn-secondary" onClick={() => setShowBroadcastModal(false)}>Cancel</button>
             </div>
+            <p style={{ marginTop: '12px', fontSize: '0.8rem', color: '#999' }}>
+              💡 "Send All" will open each link in a new tab. You'll need to click "Send" on each WhatsApp window.
+            </p>
           </div>
         </div>
       )}

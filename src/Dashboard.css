@@ -345,3 +345,29 @@
     margin-top: 8px;
   }
 }
+
+/* ---- Filter bar for orders ---- */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.filter-bar button {
+  padding: 6px 16px;
+  border: 1px solid #ddd;
+  border-radius: 30px;
+  background: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+  font-size: 0.85rem;
+}
+.filter-bar button.active {
+  background: #ff4f98;
+  border-color: #ff4f98;
+  color: white;
+}
+.filter-bar button:hover:not(.active) {
+  border-color: #999;
+}

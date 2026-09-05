@@ -1,4 +1,4 @@
-/* global process */
+/* eslint-disable no-undef */
 import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL);
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     fontStyle,
     whatsapp,
     screenshotUrl,
-    productId, // for store orders
+    productId,
   } = req.body;
 
   if (!screenshotUrl && mode === 'custom') {
@@ -35,14 +35,39 @@ export default async function handler(req, res) {
   const shortCode = await generateShortCode();
 
   try {
+    // ✅ Explicitly list all columns except 'id' (auto-generated)
     await sql`
       INSERT INTO orders (
-        short_code, mode, customer_name, color, main_patches, addons, letter_patches,
-        initials, font_style, whatsapp, screenshot_url, product_id, status
+        short_code,
+        mode,
+        customer_name,
+        color,
+        main_patches,
+        addons,
+        letter_patches,
+        initials,
+        font_style,
+        whatsapp,
+        screenshot_url,
+        product_id,
+        status,
+        created_at
       )
       VALUES (
-        ${shortCode}, ${mode}, ${customerName || null}, ${color}, ${mainPatches}, ${addons}, ${letterPatches},
-        ${initials}, ${fontStyle}, ${whatsapp}, ${screenshotUrl || null}, ${productId || null}, 'pending'
+        ${shortCode},
+        ${mode},
+        ${customerName || null},
+        ${color},
+        ${mainPatches || []},
+        ${addons || []},
+        ${letterPatches || []},
+        ${initials || 'None'},
+        ${fontStyle || 'normal'},
+        ${whatsapp},
+        ${screenshotUrl || null},
+        ${productId || null},
+        'pending',
+        NOW()
       )
     `;
     return res.status(200).json({ success: true, shortCode });

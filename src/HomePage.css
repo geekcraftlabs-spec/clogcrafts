@@ -252,3 +252,27 @@
     font-size: 2.2rem;
   }
 }
+
+/* ---- Scroll Indicator ---- */
+.scroll-indicator {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #999;
+  animation: bounceDown 2s infinite;
+}
+.scroll-arrow {
+  font-size: 2rem;
+  line-height: 1;
+}
+.scroll-text {
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+@keyframes bounceDown {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}

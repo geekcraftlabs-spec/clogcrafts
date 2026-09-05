@@ -1,5 +1,4 @@
 /* eslint-disable no-undef */
-/* eslint-disable react-hooks/immutability */
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
@@ -39,14 +38,6 @@ function Dashboard() {
     const sent = localStorage.getItem('broadcastSent') === 'true';
     setBroadcastSent(sent);
   }, []);
-
-  // ---- Auto‑refresh every 15 seconds ----
-  useEffect(() => {
-    if (!authenticated) return;
-    fetchData();
-    const interval = setInterval(fetchData, 15000);
-    return () => clearInterval(interval);
-  }, [authenticated]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -95,6 +86,7 @@ function Dashboard() {
     }
   };
 
+  // ---- WhatsApp message WITHOUT emojis ----
   const sendWhatsApp = (order) => {
     const baseUrl = window.location.origin;
     let viewUrl;
@@ -105,25 +97,27 @@ function Dashboard() {
     }
     const number = formatWhatsAppNumber(order.whatsapp);
     const payShapNumber = '0682852438@FNB';
-    const message = `👋 Hi${order.customer_name ? ` ${order.customer_name}` : ''}! Your order is ready.
+    const customerName = order.customer_name || 'there';
+    const message = 
+`Hi ${customerName}! Your order is ready.
 
-🔗 View your order: ${viewUrl}
+View your order: ${viewUrl}
 
-📋 Order details:
-• Colour: ${order.color}
-• Patches: ${order.main_patches?.join(', ') || 'None'}
-• Add-ons: ${order.addons?.join(', ') || 'None'}
-• Letters: ${order.letter_patches?.join(', ') || 'None'}
-• Initials: ${order.initials || 'None'}
+Order details:
+- Colour: ${order.color || 'N/A'}
+- Patches: ${order.main_patches?.join(', ') || 'None'}
+- Add-ons: ${order.addons?.join(', ') || 'None'}
+- Letters: ${order.letter_patches?.join(', ') || 'None'}
+- Initials: ${order.initials || 'None'}
 
-💰 Price: R${order.owner_price || 'To be confirmed'}
+Price: R${order.owner_price || order.total || 'To be confirmed'}
 
-💳 Payment:
-Please PayShap to ${payShapNumber}
+Payment:
+PayShap to ${payShapNumber}
 Reference: ${order.short_code}
-Send POP to this number when done.
+Send proof of payment to this number.
 
-We'll start crafting once payment is confirmed. 🧵👟
+We start crafting once payment is confirmed.
 
 Thank you for choosing Clog Crafts!`;
 
@@ -131,7 +125,7 @@ Thank you for choosing Clog Crafts!`;
     window.open(`https://wa.me/${number}?text=${encoded}`, '_blank');
   };
 
-  // ---- Broadcast functions (unchanged) ----
+  // ---- Broadcast (no emojis) ----
   const handleBroadcast = () => {
     if (waitlist.length === 0) {
       alert('No waitlist entries to broadcast to.');
@@ -191,7 +185,7 @@ Thank you for choosing Clog Crafts!`;
       localStorage.setItem('broadcastSent', 'true');
       setBroadcastSent(true);
       setShowBroadcastModal(false);
-      alert('✅ All numbers processed! Broadcast marked as sent.');
+      alert('All numbers processed! Broadcast marked as sent.');
     }
   };
 
@@ -214,7 +208,7 @@ Thank you for choosing Clog Crafts!`;
     localStorage.setItem('broadcastSent', 'true');
     setBroadcastSent(true);
     setShowBroadcastModal(false);
-    alert('✅ Broadcast marked as sent!');
+    alert('Broadcast marked as sent!');
   };
 
   const resetBroadcast = () => {
@@ -229,8 +223,8 @@ Thank you for choosing Clog Crafts!`;
       <div className="dashboard-login">
         <div className="login-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2>🔐 Admin Login</h2>
-            <a href="/" className="home-btn-login">🏠 Home</a>
+            <h2>Admin Login</h2>
+            <a href="/" className="home-btn-login">Home</a>
           </div>
           <form onSubmit={handleLogin}>
             <input
@@ -247,7 +241,6 @@ Thank you for choosing Clog Crafts!`;
     );
   }
 
-  // ---- Filtering ----
   const filteredByMode = modeFilter === 'all' ? orders : orders.filter(o => o.mode === modeFilter);
   const filteredOrders = statusFilter === 'all' ? filteredByMode : filteredByMode.filter(o => o.status === statusFilter);
 
@@ -256,9 +249,9 @@ Thank you for choosing Clog Crafts!`;
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
-        <h1>🧑‍💼 Clog Crafts – Admin Dashboard</h1>
+        <h1>Clog Crafts – Admin Dashboard</h1>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <a href="/" className="home-btn">🏠 Home</a>
+          <a href="/" className="home-btn">Home</a>
           <button className="logout-btn" onClick={() => setAuthenticated(false)}>Logout</button>
         </div>
       </header>
@@ -268,27 +261,31 @@ Thank you for choosing Clog Crafts!`;
       ) : (
         <>
           <section className="dashboard-section">
+            {/* Orders header with refresh button */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
               <h2>
-                📦 Orders ({filteredOrders.length})
-                {pendingCount > 0 && <span className="pending-badge">🔴 {pendingCount} pending</span>}
+                Orders ({filteredOrders.length})
+                {pendingCount > 0 && <span className="pending-badge">{pendingCount} pending</span>}
               </h2>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <div className="filter-bar">
-                  <button className={statusFilter === 'all' ? 'active' : ''} onClick={() => setStatusFilter('all')}>All</button>
-                  <button className={statusFilter === 'pending' ? 'active' : ''} onClick={() => setStatusFilter('pending')}>
-                    Pending {pendingCount > 0 && <span className="count-badge">{pendingCount}</span>}
-                  </button>
-                  <button className={statusFilter === 'paid' ? 'active' : ''} onClick={() => setStatusFilter('paid')}>Paid</button>
-                  <button className={statusFilter === 'completed' ? 'active' : ''} onClick={() => setStatusFilter('completed')}>Completed</button>
-                </div>
-                <div className="filter-bar">
-                  <button className={modeFilter === 'all' ? 'active' : ''} onClick={() => setModeFilter('all')}>All</button>
-                  <button className={modeFilter === 'custom' ? 'active' : ''} onClick={() => setModeFilter('custom')}>Custom</button>
-                  <button className={modeFilter === 'store' ? 'active' : ''} onClick={() => setModeFilter('store')}>Store</button>
-                  <button className={modeFilter === 'uploaded' ? 'active' : ''} onClick={() => setModeFilter('uploaded')}>Uploaded</button>
-                </div>
-              </div>
+              <button className="refresh-btn" onClick={fetchData}>↻ Refresh</button>
+            </div>
+
+            {/* Filter row 1: Mode filters */}
+            <div className="filter-bar mode-filters">
+              <button className={modeFilter === 'all' ? 'active' : ''} onClick={() => setModeFilter('all')}>All</button>
+              <button className={modeFilter === 'custom' ? 'active' : ''} onClick={() => setModeFilter('custom')}>Custom</button>
+              <button className={modeFilter === 'store' ? 'active' : ''} onClick={() => setModeFilter('store')}>Store</button>
+              <button className={modeFilter === 'uploaded' ? 'active' : ''} onClick={() => setModeFilter('uploaded')}>Uploaded</button>
+            </div>
+
+            {/* Filter row 2: Status filters */}
+            <div className="filter-bar status-filters">
+              <button className={statusFilter === 'all' ? 'active' : ''} onClick={() => setStatusFilter('all')}>All</button>
+              <button className={statusFilter === 'pending' ? 'active' : ''} onClick={() => setStatusFilter('pending')}>
+                Pending {pendingCount > 0 && <span className="count-badge">{pendingCount}</span>}
+              </button>
+              <button className={statusFilter === 'paid' ? 'active' : ''} onClick={() => setStatusFilter('paid')}>Paid</button>
+              <button className={statusFilter === 'completed' ? 'active' : ''} onClick={() => setStatusFilter('completed')}>Completed</button>
             </div>
 
             {filteredOrders.length === 0 ? (
@@ -315,6 +312,9 @@ Thank you for choosing Clog Crafts!`;
                       <div>Initials: {order.initials || 'None'}</div>
                       <div>WhatsApp: <a href={`https://wa.me/${formatWhatsAppNumber(order.whatsapp)}`} target="_blank" rel="noopener noreferrer">{order.whatsapp}</a></div>
                       <div>
+                        Price: <strong>R{order.owner_price || order.total || 'To be confirmed'}</strong>
+                      </div>
+                      <div>
                         Status: 
                         <button 
                           className={`status-btn ${order.status || 'pending'}`}
@@ -328,7 +328,7 @@ Thank you for choosing Clog Crafts!`;
                       </div>
                       <div className="order-controls">
                         <button className="whatsapp-btn" onClick={() => sendWhatsApp(order)}>
-                          💬 Send WhatsApp
+                          Send WhatsApp
                         </button>
                       </div>
                     </div>
@@ -340,15 +340,15 @@ Thank you for choosing Clog Crafts!`;
 
           <section className="dashboard-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-              <h2>📱 Waitlist ({waitlist.length})</h2>
+              <h2>Waitlist ({waitlist.length})</h2>
               {!broadcastSent ? (
                 <button className="broadcast-btn" onClick={handleBroadcast}>
-                  🌐 Ready to Go Live
+                  Ready to Go Live
                 </button>
               ) : (
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>✅ Broadcast sent!</span>
-                  <button className="reset-btn" onClick={resetBroadcast}>🔄 Reset</button>
+                  <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>Broadcast sent!</span>
+                  <button className="reset-btn" onClick={resetBroadcast}>Reset</button>
                 </div>
               )}
             </div>
@@ -377,12 +377,12 @@ Thank you for choosing Clog Crafts!`;
         </>
       )}
 
-      {/* Broadcast Modal – unchanged */}
+      {/* Broadcast Modal (unchanged) */}
       {showBroadcastModal && (
         <div className="modal-overlay" onClick={() => setShowBroadcastModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowBroadcastModal(false)}>✕</button>
-            <h3>🌐 Broadcast to Waitlist</h3>
+            <h3>Broadcast to Waitlist</h3>
             <div style={{ marginBottom: '12px', background: '#f9f9f9', padding: '12px', borderRadius: '8px', fontSize: '0.9rem' }}>
               <strong>Preview message:</strong>
               <div style={{ marginTop: '4px', whiteSpace: 'pre-wrap', color: '#444' }}>
@@ -399,24 +399,24 @@ Thank you for choosing Clog Crafts!`;
                 <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #eee', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>{item.whatsapp}</span>
                   <span>
-                    {item.status === 'pending' && <span style={{ color: '#f1c40f' }}>⏳ Pending</span>}
-                    {item.status === 'opened' && <span style={{ color: '#3498db' }}>📤 Opened</span>}
-                    {item.status === 'sent' && <span style={{ color: '#2ecc71' }}>✅ Sent</span>}
+                    {item.status === 'pending' && <span style={{ color: '#f1c40f' }}>Pending</span>}
+                    {item.status === 'opened' && <span style={{ color: '#3498db' }}>Opened</span>}
+                    {item.status === 'sent' && <span style={{ color: '#2ecc71' }}>Sent</span>}
                   </span>
                 </div>
               ))}
             </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <button className="btn-primary" onClick={openNext}>📤 Open Next</button>
+              <button className="btn-primary" onClick={openNext}>Open Next</button>
               <button className="btn-secondary" onClick={markAsSent} disabled={currentIndex === -1 || broadcastItems[currentIndex]?.status === 'sent'}>
-                ✅ Mark as Sent
+                Mark as Sent
               </button>
-              <button className="btn-secondary" onClick={copyAllLinks}>📋 Copy All Links</button>
-              <button className="btn-secondary" onClick={confirmSend}>✅ Mark All as Sent</button>
+              <button className="btn-secondary" onClick={copyAllLinks}>Copy All Links</button>
+              <button className="btn-secondary" onClick={confirmSend}>Mark All as Sent</button>
               <button className="btn-secondary" onClick={() => setShowBroadcastModal(false)}>Close</button>
             </div>
             <p style={{ marginTop: '12px', fontSize: '0.8rem', color: '#999' }}>
-              💡 Click "Open Next" to open the next pending link. After sending in WhatsApp, click "Mark as Sent".
+              Click "Open Next" to open the next pending link. After sending in WhatsApp, click "Mark as Sent".
             </p>
           </div>
         </div>

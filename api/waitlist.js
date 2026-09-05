@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
   try {
     await sql`
-      INSERT INTO waitlist (whatsapp, project)
+      INSERT INTO clogcrafts.waitlist (whatsapp, project)
       VALUES (${cleaned}, 'clogcrafts')
       ON CONFLICT (whatsapp) DO NOTHING
     `;

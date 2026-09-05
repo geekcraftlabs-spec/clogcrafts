@@ -1,4 +1,4 @@
-/* global process */
+/* eslint-disable no-undef */
 import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL);
@@ -11,6 +11,7 @@ export default async function handler(req, res) {
   try {
     const entries = await sql`
       SELECT * FROM waitlist
+      WHERE project = 'clogcrafts'
       ORDER BY created_at DESC
     `;
     return res.status(200).json(entries);

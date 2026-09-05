@@ -20,8 +20,8 @@ export default async function handler(req, res) {
 
   try {
     await sql`
-      INSERT INTO waitlist (whatsapp)
-      VALUES (${cleaned})
+      INSERT INTO waitlist (whatsapp, project)
+      VALUES (${cleaned}, 'clogcrafts')
       ON CONFLICT (whatsapp) DO NOTHING
     `;
     return res.status(200).json({ success: true, message: 'You are on the waitlist!' });

@@ -4,7 +4,7 @@ import { neon } from '@neondatabase/serverless';
 const sql = neon(process.env.DATABASE_URL);
 
 const generateShortCode = async () => {
-  const result = await sql`SELECT COUNT(*) FROM orders`;
+  const result = await sql`SELECT COUNT(*) FROM orders WHERE project = 'clogcrafts'`;
   const count = parseInt(result[0].count) + 1;
   return `CLOG-${String(count).padStart(3, '0')}`;
 };
@@ -35,7 +35,6 @@ export default async function handler(req, res) {
   const shortCode = await generateShortCode();
 
   try {
-    // ✅ Explicitly list all columns except 'id' (auto-generated)
     await sql`
       INSERT INTO orders (
         short_code,
@@ -51,7 +50,8 @@ export default async function handler(req, res) {
         screenshot_url,
         product_id,
         status,
-        created_at
+        created_at,
+        project
       )
       VALUES (
         ${shortCode},
@@ -67,7 +67,8 @@ export default async function handler(req, res) {
         ${screenshotUrl || null},
         ${productId || null},
         'pending',
-        NOW()
+        NOW(),
+        'clogcrafts'
       )
     `;
     return res.status(200).json({ success: true, shortCode });

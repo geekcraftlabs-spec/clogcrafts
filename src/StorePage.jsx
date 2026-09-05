@@ -2,76 +2,93 @@
 import React, { useState } from 'react';
 import './StorePage.css';
 
-// Reuse COLORS from App? We'll import from App or define here.
-// For simplicity, define a smaller set for the store.
-const COLORS = [
-  { id: 'black', name: 'Black', price: 240, img: '/images/base/black-front.jpg' },
-  { id: 'brown', name: 'Brown', price: 240, img: '/images/base/brown-front.jpg' },
-  { id: 'beige', name: 'Beige', price: 240, img: '/images/base/beige-front.jpg' },
-  { id: 'chantilly', name: 'Chantilly', price: 240, img: '/images/base/chantilly-front.jpg' },
-  { id: 'grey', name: 'Grey', price: 240, img: '/images/base/grey-arialview.jpg' },
-  { id: 'mocha', name: 'Mocha Brown', price: 240, img: '/images/base/mocha-brown-arial.jpg' },
+// Base colours for plain clogs (images already in /images/base/)
+const PLAIN_COLORS = [
+  { id: 'black', name: 'Black', frontImg: '/images/base/black-front.jpg' },
+  { id: 'brown', name: 'Brown', frontImg: '/images/base/brown-front.jpg' },
+  { id: 'beige', name: 'Beige', frontImg: '/images/base/beige-front.jpg' },
+  { id: 'chantilly', name: 'Chantilly', frontImg: '/images/base/chantilly-front.jpg' },
+  { id: 'grey', name: 'Grey', frontImg: '/images/base/grey-arialview.jpg' },
+  { id: 'mocha', name: 'Mocha Brown', frontImg: '/images/base/mocha-brown-arial.jpg' },
 ];
 
-// Fur clogs (higher price, same images)
-const FUR_COLORS = COLORS.map(c => ({ ...c, price: 390, id: `fur-${c.id}`, name: `${c.name} (Fur)` }));
+// Fur clogs – each with a dedicated image
+const FUR_PRODUCTS = [
+  { id: 'fur-darkgreen', name: 'Dark Green Fur', price: 390, image: '/images/fur/fur-darkgreen2.png', description: 'Luxurious dark green fur clog – cosy and stylish.' },
+  { id: 'fur-black', name: 'Black Fur', price: 390, image: '/images/fur/fur-black1.png', description: 'Classic black fur clog – warm and versatile.' },
+  { id: 'fur-beige', name: 'Beige Fur', price: 390, image: '/images/fur/fur-beige.png', description: 'Elegant beige fur clog – soft and neutral.' },
+  { id: 'fur-coffee', name: 'Coffee Fur', price: 390, image: '/images/fur/fur-coffee.png', description: 'Rich coffee-coloured fur – a cozy favourite.' },
+  { id: 'fur-mocha', name: 'Mocha Brown Fur', price: 390, image: '/images/fur/fur-mochabrown.png', description: 'Deep mocha brown fur – warm and inviting.' },
+];
 
-// Signature collection (pre-designed)
-const SIGNATURES = [
-  { id: 'classic-cross', name: 'Classic Cross', price: 420, img: '/images/base/black-front.jpg' },
-  { id: 'spider-set', name: 'Spider Set', price: 480, img: '/images/base/grey-arialview.jpg' },
-  { id: 'stitch-love', name: 'Stitch Love', price: 460, img: '/images/base/chantilly-front.jpg' },
+// Signature designs – all R350
+const SIGNATURE_PRODUCTS = [
+  { id: 'sig-1', name: 'Cross & Bow', price: 350, image: '/images/signatures/signature1-crossandbow.png', description: 'Two crosses with a pink bow – elegant and bold.' },
+  { id: 'sig-2', name: 'Name & Cross', price: 350, image: '/images/signatures/signature2-nameandcross.png', description: 'Personalised with a name and a classic cross.' },
+  { id: 'sig-3', name: 'Name & Two Crosses', price: 350, image: '/images/signatures/signature3-nameand2crosses.png', description: 'Double cross design with custom name lettering.' },
+  { id: 'sig-4', name: 'Spider‑Man & Numbers', price: 350, image: '/images/signatures/signature4-spidermanwithnumber.png', description: 'Spider‑Man baby patch with bold numbers.' },
+  { id: 'sig-5', name: 'Stitch Waving', price: 350, image: '/images/signatures/signature5-stitchwaving.png', description: 'Stitch waving – playful and full of personality.' },
+];
+
+// Plain products (R240)
+const plainProducts = PLAIN_COLORS.map(c => ({
+  id: `plain-${c.id}`,
+  type: 'plain',
+  name: `${c.name} Clog`,
+  price: 240,
+  image: c.frontImg,
+  description: `Classic ${c.name.toLowerCase()} clog – a timeless staple.`,
+}));
+
+// Combine all products
+const allProducts = [
+  ...plainProducts,
+  ...FUR_PRODUCTS.map(p => ({ ...p, type: 'fur' })),
+  ...SIGNATURE_PRODUCTS.map(p => ({ ...p, type: 'signature' })),
 ];
 
 function StorePage() {
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'plain', 'fur', 'signature'
+  const [filter, setFilter] = useState('all');
 
-  const getProducts = () => {
-    let products = [];
-    if (activeFilter === 'all' || activeFilter === 'plain') {
-      products = products.concat(COLORS.map(c => ({ ...c, type: 'plain' })));
-    }
-    if (activeFilter === 'all' || activeFilter === 'fur') {
-      products = products.concat(FUR_COLORS.map(c => ({ ...c, type: 'fur' })));
-    }
-    if (activeFilter === 'all' || activeFilter === 'signature') {
-      products = products.concat(SIGNATURES.map(c => ({ ...c, type: 'signature' })));
-    }
-    return products;
-  };
-
-  const products = getProducts();
+  const filtered = filter === 'all' ? allProducts : allProducts.filter(p => p.type === filter);
 
   return (
     <div className="store-page">
       <div className="store-header">
-        <h1>🛍️ Clog Crafts – Store</h1>
-        <p>Choose your style – plain, fur, or signature designs.</p>
+        <h1>🛍️ Clog Crafts Store</h1>
+        <p>Explore our collection of plain, fur, and signature clogs.</p>
       </div>
 
       <div className="filter-bar">
-        <button className={activeFilter === 'all' ? 'filter-btn active' : 'filter-btn'} onClick={() => setActiveFilter('all')}>All</button>
-        <button className={activeFilter === 'plain' ? 'filter-btn active' : 'filter-btn'} onClick={() => setActiveFilter('plain')}>Plain</button>
-        <button className={activeFilter === 'fur' ? 'filter-btn active' : 'filter-btn'} onClick={() => setActiveFilter('fur')}>Fur</button>
-        <button className={activeFilter === 'signature' ? 'filter-btn active' : 'filter-btn'} onClick={() => setActiveFilter('signature')}>Signature</button>
+        <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>All</button>
+        <button className={filter === 'plain' ? 'active' : ''} onClick={() => setFilter('plain')}>Plain</button>
+        <button className={filter === 'fur' ? 'active' : ''} onClick={() => setFilter('fur')}>Fur</button>
+        <button className={filter === 'signature' ? 'active' : ''} onClick={() => setFilter('signature')}>Signature</button>
       </div>
 
       <div className="product-grid">
-        {products.map(product => (
+        {filtered.map((product) => (
           <div key={product.id} className="product-card">
             <div className="product-image">
-              <img src={product.img} alt={product.name} />
-              {product.type === 'fur' && <span className="badge-fur">Fur</span>}
-              {product.type === 'signature' && <span className="badge-signature">Signature</span>}
+              <img src={product.image} alt={product.name} />
+              {product.type === 'fur' && <span className="badge fur">Fur</span>}
+              {product.type === 'signature' && <span className="badge signature">Signature</span>}
             </div>
             <div className="product-info">
               <h3>{product.name}</h3>
-              <p className="product-price">R {product.price}</p>
-              <button className="btn-primary">Add to Cart</button>
+              <p className="product-desc">{product.description}</p>
+              <div className="product-price">R {product.price}</div>
+              <button className="btn-primary" onClick={() => alert(`Added ${product.name} to cart!`)}>
+                Add to Cart 🛒
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      {filtered.length === 0 && (
+        <p className="no-products">No products found in this category.</p>
+      )}
     </div>
   );
 }

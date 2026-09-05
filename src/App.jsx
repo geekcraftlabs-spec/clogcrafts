@@ -1,10 +1,11 @@
-﻿/* eslint-disable react-hooks/set-state-in-effect */
+﻿/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-useless-assignment */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './index.css';
+import HomePage from './HomePage';
 import WaitlistPage from './WaitlistPage';
 import Dashboard from './Dashboard';
-import HomePage from './HomePage';
 import StorePage from './StorePage';
 
 // ============================================================
@@ -88,7 +89,6 @@ function App() {
     else if (path === '/staff' || path === '/dashboard') setCurrentPage('dashboard');
     else if (path === '/studio') setCurrentPage('studio');
     else if (path === '/store') setCurrentPage('store');
-    else if (path === '/upload') setCurrentPage('upload'); // placeholder
     else setCurrentPage('home');
   }, []);
 
@@ -109,6 +109,7 @@ function App() {
   const [globalPatchSize, setGlobalPatchSize] = useState(0.14);
   const [whatsapp, setWhatsapp] = useState('');
   const [whatsappConfirm, setWhatsappConfirm] = useState('');
+  const [customerName, setCustomerName] = useState('');
 
   // ---- Screenshot preview ----
   const [showScreenshot, setShowScreenshot] = useState(false);
@@ -209,7 +210,7 @@ function App() {
     }
   }, [mainPatches, addons, letterPatches, initials, initialsColor, isGold, fontSize, fontStyle, initialsPos, globalPatchSize, allLetterPatches]);
 
-  // ---- Load images for main patches and add-ons ----
+  // ---- Load images ----
   useEffect(() => {
     [...MAIN_PATCHES, ...ADDONS].forEach(p => {
       const img = new Image();
@@ -226,7 +227,6 @@ function App() {
     });
   }, [renderCanvas]);
 
-  // ---- Load letter images ----
   useEffect(() => {
     const loadLetters = async () => {
       const images = import.meta.glob('./assets/images/patches/letters/cartoonish-a-z/*.png', { eager: true, import: 'default' });
@@ -249,7 +249,6 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ---- Load base image ----
   useEffect(() => {
     const img = new Image();
     const src = viewAngle === 'front' ? color.frontImg : color.sideImg;
@@ -265,7 +264,6 @@ function App() {
     img.src = src;
   }, [color, viewAngle, renderCanvas]);
 
-  // ---- Re-render on changes ----
   useEffect(() => {
     renderCanvas();
   }, [mainPatches, addons, letterPatches, initials, initialsColor, isGold, fontSize, fontStyle, initialsPos, globalPatchSize, renderCanvas]);
@@ -560,6 +558,7 @@ function App() {
     return { mainPrice, addonTotal, letterPrice, initialsPrice, total };
   };
 
+  // ---- Screenshot preview ----
   const previewScreenshot = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -568,6 +567,7 @@ function App() {
     setShowScreenshot(true);
   };
 
+  // ---- Upload to Cloudinary ----
   const uploadToCloudinary = async (dataURL) => {
     const formData = new FormData();
     formData.append('file', dataURL);
@@ -584,7 +584,12 @@ function App() {
     return data.secure_url;
   };
 
+  // ---- Place Order ----
   const placeOrder = async () => {
+    if (!customerName.trim()) {
+      alert('Please enter your name.');
+      return;
+    }
     if (!whatsapp || !whatsappConfirm) {
       alert('Please enter your WhatsApp number and confirm it.');
       return;
@@ -614,7 +619,8 @@ function App() {
     }
 
     const orderData = {
-      mode: 'studio',
+      mode: 'custom',
+      customerName: customerName.trim(),
       color: color.name,
       mainPatches: mainPatches.map(p => MAIN_PATCHES.find(pp => pp.id === p.id)?.name || p.id),
       addons: addons.map(p => ADDONS.find(pp => pp.id === p.id)?.name || p.id),
@@ -680,7 +686,7 @@ function App() {
     );
   };
 
-  // ---- Render Steps ----
+  // ---- Render Steps (only Step 4 shown, the rest are standard) ----
   const renderStepContent = () => {
     switch(step) {
       case 1:
@@ -789,7 +795,6 @@ function App() {
             </div>
           </div>
         );
-
       case 3:
         return (
           <div className="step-content active">
@@ -886,7 +891,6 @@ function App() {
             </div>
           </div>
         );
-
       case 4: {
         const { mainPrice, addonTotal, letterPrice, initialsPrice, total } = getReview();
         return (
@@ -905,6 +909,16 @@ function App() {
             <div style={{marginTop:15}}>
               <p style={{fontSize:13, color:'#666', marginBottom:5}}>We'll contact you on WhatsApp to confirm your order.</p>
               <label style={{fontSize:13, color:'#666', display:'block'}}>
+                Your name:
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  style={{display:'block', width:'100%', padding:'10px', marginTop:'5px', borderRadius:'8px', border:'1px solid #ddd'}}
+                />
+              </label>
+              <label style={{fontSize:13, color:'#666', marginTop:10, display:'block'}}>
                 WhatsApp number:
                 <input
                   type="tel"
@@ -949,42 +963,15 @@ function App() {
   if (currentPage === 'dashboard') return <Dashboard />;
   if (currentPage === 'store') return <StorePage />;
   if (currentPage === 'home') return <HomePage />;
-  // Default: Studio (and upload placeholder)
-  if (currentPage === 'upload') {
-    // Placeholder for upload page
-    return (
-      <div style={{ padding: '120px 20px', textAlign: 'center' }}>
-        <h1>📤 Upload Your Design</h1>
-        <p>Coming soon – upload your design idea and we'll craft it for you.</p>
-        <a href="/" className="btn-primary" style={{ display: 'inline-block', marginTop: 20, background: '#ff4f98', color: 'white', padding: '14px 34px', borderRadius: '50px', textDecoration: 'none' }}>← Back to Home</a>
-      </div>
-    );
-  }
 
-  // Studio page
   return (
     <>
       <nav>
         <a href="/" className="logo">CLOG CRAFTS</a>
         <ul>
           <li><a href="/">Home</a></li>
-          <li
-            className="dropdown"
-            onMouseEnter={() => setStudioDropdown(true)}
-            onMouseLeave={() => setStudioDropdown(false)}
-          >
-            <a
-              href="#"
-              onClick={(e) => { e.preventDefault(); setStudioDropdown(!studioDropdown); }}
-            >
-              Studio <span className="dropdown-arrow">▼</span>
-            </a>
-            <ul className={`dropdown-menu ${studioDropdown ? 'open' : ''}`}>
-              <li><a href="/store">🛍️ Store</a></li>
-              <li><a href="/studio">🛠️ Build Your Own</a></li>
-              <li><a href="/upload">📤 Upload Your Design</a></li>
-            </ul>
-          </li>
+          <li><a href="/store">Store</a></li>
+          <li><a href="/studio" style={{color:'#ff4f98', fontWeight:600}}>Studio</a></li>
           <li><a href="/staff">Staff</a></li>
         </ul>
       </nav>
@@ -1000,21 +987,15 @@ function App() {
         <div className="screenshot-modal" onClick={() => setShowScreenshot(false)}>
           <div className="screenshot-modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="screenshot-close" onClick={() => setShowScreenshot(false)}>✕</button>
-            <h3 style={{marginBottom:'15px'}}>📸 Your Design Screenshot</h3>
+            <h3>📸 Your Design Screenshot</h3>
             <img src={screenshotData} alt="Your custom clog design" style={{width:'100%', borderRadius:'12px', border:'1px solid #eee'}} />
-            <p style={{marginTop:'15px', fontSize:'13px', color:'#888'}}>
-              This is the image that will be attached to your order.
-            </p>
-            <button 
-              className="btn-step" 
-              style={{marginTop:'15px', background:'#ff4f98', color:'white'}}
-              onClick={() => {
-                const link = document.createElement('a');
-                link.download = 'my-custom-clog.png';
-                link.href = screenshotData;
-                link.click();
-              }}
-            >
+            <p>This is the image that will be attached to your order.</p>
+            <button className="btn-step" style={{marginTop:'15px', background:'#ff4f98', color:'white'}} onClick={() => {
+              const link = document.createElement('a');
+              link.download = 'my-custom-clog.png';
+              link.href = screenshotData;
+              link.click();
+            }}>
               ⬇️ Download PNG
             </button>
           </div>
@@ -1035,7 +1016,7 @@ function App() {
                   <React.Fragment key={s}>
                     <div className={`step-dot ${step === s ? 'active' : ''} ${step > s ? 'completed' : ''}`} onClick={() => goToStep(s)}>
                       <div className="circle">{s}</div>
-                      <span className="label">{s === 1 ? 'Color' : s === 2 ? 'Patches' : s === 3 ? 'Initials' : 'Preview'}</span>
+                      <span className="label">{s === 1 ? 'Color' : s === 2 ? 'Patches' : s === 3 ? 'Initials' : 'Review'}</span>
                     </div>
                     {index < 3 && <span className="step-arrow">→</span>}
                   </React.Fragment>
@@ -1047,12 +1028,10 @@ function App() {
             <div className="preview-panel" id="previewPanel">
               <h3>Live Preview</h3>
               <p className="preview-sub">See your custom clog come to life</p>
-
               <div className="angle-toggle" style={{marginBottom:'15px'}}>
                 <button className={'angle-btn ' + (viewAngle === 'front' ? 'active' : '')} onClick={() => setViewAngle('front')}>Front</button>
                 <button className={'angle-btn ' + (viewAngle === 'side' ? 'active' : '')} onClick={() => setViewAngle('side')}>Side</button>
               </div>
-
               <div className="clog-preview">
                 <canvas
                   ref={canvasRef}
@@ -1068,9 +1047,7 @@ function App() {
                   onTouchEnd={handlePointerUp}
                 />
               </div>
-              <p style={{fontSize:11, color:'#bbb', marginTop:5}}>
-                💡 Drag items or initials to reposition them.
-              </p>
+              <p style={{fontSize:11, color:'#bbb', marginTop:5}}>💡 Drag items or initials to reposition them.</p>
             </div>
           </div>
         </div>

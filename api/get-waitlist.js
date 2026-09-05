@@ -4,19 +4,29 @@ import { neon } from '@neondatabase/serverless';
 const sql = neon(process.env.DATABASE_URL);
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const { whatsapp } = req.body;
+  if (!whatsapp) {
+    return res.status(400).json({ error: 'WhatsApp number is required' });
+  }
+
+  const cleaned = whatsapp.replace(/\D/g, '');
+  if (cleaned.length < 10 || cleaned.length > 15) {
+    return res.status(400).json({ error: 'Invalid WhatsApp number' });
+  }
+
   try {
-    const entries = await sql`
-      SELECT * FROM clogcrafts.waitlist
-      WHERE project = 'clogcrafts'
-      ORDER BY created_at DESC
+    await sql`
+      INSERT INTO clogcrafts.waitlist (whatsapp, project)
+      VALUES (${cleaned}, 'clogcrafts')
+      ON CONFLICT (whatsapp) DO NOTHING
     `;
-    return res.status(200).json(entries);
+    return res.status(200).json({ success: true, message: 'You are on the waitlist!' });
   } catch (err) {
-    console.error('Get waitlist error:', err);
-    return res.status(500).json({ error: 'Failed to fetch waitlist' });
+    console.error('Waitlist insert error:', err);
+    return res.status(500).json({ error: 'Failed to save' });
   }
 }

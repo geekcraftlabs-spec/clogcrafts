@@ -1,4 +1,5 @@
 /* eslint-disable no-undef */
+/* eslint-disable react-hooks/immutability */
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
@@ -23,6 +24,7 @@ function Dashboard() {
   const [waitlist, setWaitlist] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modeFilter, setModeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const [liveLink, setLiveLink] = useState(window.location.origin);
   const [welcomeMessage, setWelcomeMessage] = useState(
@@ -38,13 +40,20 @@ function Dashboard() {
     setBroadcastSent(sent);
   }, []);
 
+  // ---- Auto‑refresh every 15 seconds ----
+  useEffect(() => {
+    if (!authenticated) return;
+    fetchData();
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, [authenticated]);
+
   const handleLogin = (e) => {
     e.preventDefault();
     const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
     if (password === adminPass) {
       setAuthenticated(true);
       setAuthError('');
-      fetchData();
     } else {
       setAuthError('Incorrect password');
     }
@@ -68,17 +77,17 @@ function Dashboard() {
     }
   };
 
-  const updateOrder = async (id, owner_price, status) => {
+  const updateOrderStatus = async (id, newStatus) => {
     try {
       const res = await fetch('/api/update-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, owner_price, status }),
+        body: JSON.stringify({ id, status: newStatus }),
       });
       if (res.ok) {
         fetchData();
       } else {
-        alert('Failed to update order');
+        alert('Failed to update order status');
       }
     } catch (err) {
       console.error('Update error:', err);
@@ -122,6 +131,7 @@ Thank you for choosing Clog Crafts!`;
     window.open(`https://wa.me/${number}?text=${encoded}`, '_blank');
   };
 
+  // ---- Broadcast functions (unchanged) ----
   const handleBroadcast = () => {
     if (waitlist.length === 0) {
       alert('No waitlist entries to broadcast to.');
@@ -237,7 +247,11 @@ Thank you for choosing Clog Crafts!`;
     );
   }
 
-  const filteredOrders = modeFilter === 'all' ? orders : orders.filter(o => o.mode === modeFilter);
+  // ---- Filtering ----
+  const filteredByMode = modeFilter === 'all' ? orders : orders.filter(o => o.mode === modeFilter);
+  const filteredOrders = statusFilter === 'all' ? filteredByMode : filteredByMode.filter(o => o.status === statusFilter);
+
+  const pendingCount = orders.filter(o => o.status === 'pending').length;
 
   return (
     <div className="dashboard-container">
@@ -255,14 +269,28 @@ Thank you for choosing Clog Crafts!`;
         <>
           <section className="dashboard-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-              <h2>📦 Orders ({filteredOrders.length})</h2>
-              <div className="filter-bar">
-                <button className={modeFilter === 'all' ? 'active' : ''} onClick={() => setModeFilter('all')}>All</button>
-                <button className={modeFilter === 'custom' ? 'active' : ''} onClick={() => setModeFilter('custom')}>Custom</button>
-                <button className={modeFilter === 'store' ? 'active' : ''} onClick={() => setModeFilter('store')}>Store</button>
-                <button className={modeFilter === 'uploaded' ? 'active' : ''} onClick={() => setModeFilter('uploaded')}>Uploaded</button>
+              <h2>
+                📦 Orders ({filteredOrders.length})
+                {pendingCount > 0 && <span className="pending-badge">🔴 {pendingCount} pending</span>}
+              </h2>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <div className="filter-bar">
+                  <button className={statusFilter === 'all' ? 'active' : ''} onClick={() => setStatusFilter('all')}>All</button>
+                  <button className={statusFilter === 'pending' ? 'active' : ''} onClick={() => setStatusFilter('pending')}>
+                    Pending {pendingCount > 0 && <span className="count-badge">{pendingCount}</span>}
+                  </button>
+                  <button className={statusFilter === 'paid' ? 'active' : ''} onClick={() => setStatusFilter('paid')}>Paid</button>
+                  <button className={statusFilter === 'completed' ? 'active' : ''} onClick={() => setStatusFilter('completed')}>Completed</button>
+                </div>
+                <div className="filter-bar">
+                  <button className={modeFilter === 'all' ? 'active' : ''} onClick={() => setModeFilter('all')}>All</button>
+                  <button className={modeFilter === 'custom' ? 'active' : ''} onClick={() => setModeFilter('custom')}>Custom</button>
+                  <button className={modeFilter === 'store' ? 'active' : ''} onClick={() => setModeFilter('store')}>Store</button>
+                  <button className={modeFilter === 'uploaded' ? 'active' : ''} onClick={() => setModeFilter('uploaded')}>Uploaded</button>
+                </div>
               </div>
             </div>
+
             {filteredOrders.length === 0 ? (
               <p>No orders in this category.</p>
             ) : (
@@ -280,34 +308,25 @@ Thank you for choosing Clog Crafts!`;
                       <div className="order-code"><strong>{order.short_code}</strong></div>
                       <div>Mode: <span className="mode-badge">{order.mode || 'custom'}</span></div>
                       {order.customer_name && <div>Name: {order.customer_name}</div>}
-                      <div>Colour: {order.color}</div>
+                      <div>Colour: {order.color || 'N/A'}</div>
                       <div>Patches: {order.main_patches?.join(', ') || 'None'}</div>
                       <div>Add-ons: {order.addons?.join(', ') || 'None'}</div>
                       <div>Letters: {order.letter_patches?.join(', ') || 'None'}</div>
                       <div>Initials: {order.initials || 'None'}</div>
                       <div>WhatsApp: <a href={`https://wa.me/${formatWhatsAppNumber(order.whatsapp)}`} target="_blank" rel="noopener noreferrer">{order.whatsapp}</a></div>
-                      <div>Status: <span className={`status-badge ${order.status}`}>{order.status}</span></div>
-                      <div className="order-controls">
-                        <input
-                          type="number"
-                          placeholder="Price (R)"
-                          defaultValue={order.owner_price || ''}
-                          onBlur={(e) => {
-                            const val = parseFloat(e.target.value);
-                            if (!isNaN(val)) {
-                              updateOrder(order.id, val, order.status);
-                            }
+                      <div>
+                        Status: 
+                        <button 
+                          className={`status-btn ${order.status || 'pending'}`}
+                          onClick={() => {
+                            const next = order.status === 'pending' ? 'paid' : order.status === 'paid' ? 'completed' : 'pending';
+                            updateOrderStatus(order.id, next);
                           }}
-                        />
-                        <select
-                          defaultValue={order.status || 'pending'}
-                          onChange={(e) => updateOrder(order.id, order.owner_price, e.target.value)}
                         >
-                          <option value="pending">Pending</option>
-                          <option value="priced">Priced</option>
-                          <option value="approved">Approved</option>
-                          <option value="completed">Completed</option>
-                        </select>
+                          {order.status || 'pending'}
+                        </button>
+                      </div>
+                      <div className="order-controls">
                         <button className="whatsapp-btn" onClick={() => sendWhatsApp(order)}>
                           💬 Send WhatsApp
                         </button>
@@ -358,25 +377,23 @@ Thank you for choosing Clog Crafts!`;
         </>
       )}
 
+      {/* Broadcast Modal – unchanged */}
       {showBroadcastModal && (
         <div className="modal-overlay" onClick={() => setShowBroadcastModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowBroadcastModal(false)}>✕</button>
             <h3>🌐 Broadcast to Waitlist</h3>
-
             <div style={{ marginBottom: '12px', background: '#f9f9f9', padding: '12px', borderRadius: '8px', fontSize: '0.9rem' }}>
               <strong>Preview message:</strong>
               <div style={{ marginTop: '4px', whiteSpace: 'pre-wrap', color: '#444' }}>
                 {welcomeMessage + liveLink}
               </div>
             </div>
-
             <div style={{ marginBottom: '12px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               <span>Pending: <strong>{broadcastItems.filter(i => i.status === 'pending').length}</strong></span>
               <span>Opened: <strong>{broadcastItems.filter(i => i.status === 'opened').length}</strong></span>
               <span>Sent: <strong>{broadcastItems.filter(i => i.status === 'sent').length}</strong></span>
             </div>
-
             <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '16px', background: '#f9f9f9', padding: '8px', borderRadius: '8px' }}>
               {broadcastItems.map((item, i) => (
                 <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #eee', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -389,7 +406,6 @@ Thank you for choosing Clog Crafts!`;
                 </div>
               ))}
             </div>
-
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button className="btn-primary" onClick={openNext}>📤 Open Next</button>
               <button className="btn-secondary" onClick={markAsSent} disabled={currentIndex === -1 || broadcastItems[currentIndex]?.status === 'sent'}>

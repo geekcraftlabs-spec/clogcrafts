@@ -1,0 +1,209 @@
+.dashboard-login {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #faf8f7;
+}
+
+.login-card {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+  width: 100%;
+  max-width: 400px;
+}
+.login-card h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.login-card input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid #eee;
+  border-radius: 30px;
+  margin-bottom: 15px;
+}
+.login-card button {
+  width: 100%;
+  padding: 14px;
+  background: #ff4f98;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.login-card .error {
+  color: #e74c3c;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.dashboard-container {
+  padding: 80px 20px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Poppins', sans-serif;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+.dashboard-header h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+}
+.logout-btn {
+  background: #eee;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.logout-btn:hover {
+  background: #ddd;
+}
+
+.dashboard-section {
+  margin-bottom: 60px;
+}
+.dashboard-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.order-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  border: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.order-image {
+  width: 100%;
+  aspect-ratio: 1 / 0.8;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+.order-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #bbb;
+}
+
+.order-details {
+  padding: 16px 20px;
+  flex: 1;
+}
+.order-code {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+  color: #ff4f98;
+}
+.order-details div {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 4px;
+}
+.status-badge {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.status-badge.pending { background: #f1c40f; color: #fff; }
+.status-badge.priced { background: #3498db; color: #fff; }
+.status-badge.approved { background: #2ecc71; color: #fff; }
+.status-badge.completed { background: #95a5a6; color: #fff; }
+
+.order-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.order-controls input,
+.order-controls select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  flex: 1 1 100px;
+}
+.order-controls .whatsapp-btn {
+  background: #25D366;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: 0.2s;
+}
+.order-controls .whatsapp-btn:hover {
+  background: #128C7E;
+}
+
+.waitlist-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+}
+.waitlist-table th,
+.waitlist-table td {
+  padding: 12px 20px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+.waitlist-table th {
+  background: #faf8f7;
+  font-weight: 600;
+}
+.waitlist-table a {
+  color: #111;
+  text-decoration: none;
+}
+.waitlist-table a:hover {
+  color: #ff4f98;
+}
+
+@media (max-width: 600px) {
+  .orders-grid {
+    grid-template-columns: 1fr;
+  }
+  .waitlist-table th,
+  .waitlist-table td {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+}

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './index.css';
 import WaitlistPage from './WaitlistPage';
+import Dashboard from './Dashboard';
 
 // ============================================================
 // IMPORT PATCH IMAGES
@@ -32,7 +33,6 @@ import diamondBlueCartoon from './assets/images/patches/diamond-blue-cartoon.jpg
 const BASE_PRICE = 240;
 const MAX_ITEMS = 12;
 
-// ✅ Fixed: paths now point to /images/base/ (public folder)
 const COLORS = [
   { id: 'black', name: 'Black', hex: '#2a2a2a', price: 0, frontImg: '/images/base/black-front.jpg', sideImg: '/images/base/black-side.jpg' },
   { id: 'brown', name: 'Brown', hex: '#8B4513', price: 0, frontImg: '/images/base/brown-front.jpg', sideImg: '/images/base/brown-side.jpg' },
@@ -84,6 +84,8 @@ function App() {
     const path = window.location.pathname;
     if (path === '/waitlist') {
       setCurrentPage('waitlist');
+    } else if (path === '/staff' || path === '/dashboard') {
+      setCurrentPage('dashboard');
     } else {
       setCurrentPage('studio');
     }
@@ -187,7 +189,6 @@ function App() {
     addons.forEach(p => drawItem(p, ADDONS));
     letterPatches.forEach(p => drawItem(p, allLetterPatches));
 
-    // Text initials (only when not using cartoonish letters, or if no letter patches)
     if (initials.length > 0 && (fontStyle !== 'bubble' || letterPatches.length === 0)) {
       const text = initials;
       let fontStr = '';
@@ -282,7 +283,7 @@ function App() {
 
   const goToStep = (s) => { if (s >= 1 && s <= 4) setStep(s); };
 
-  // ---- Toggle functions (main patches & add-ons only) ----
+  // ---- Toggle functions ----
   const toggleMainPatch = (patchDef) => {
     if (mainPatches.length + addons.length + letterPatches.length >= MAX_ITEMS) {
       alert(`Max ${MAX_ITEMS} items total.`);
@@ -319,7 +320,6 @@ function App() {
     scrollToCanvas();
   };
 
-  // ---- Update letter patches from text (Step 3) ----
   const updateLetterPatchesFromText = useCallback((text) => {
     const letters = text.toLowerCase().split('');
     const newLetterPatches = [];
@@ -358,7 +358,6 @@ function App() {
     setLetterPatches(newLetterPatches);
   }, [allLetterPatches, globalPatchSize, mainPatches, addons]);
 
-  // ---- Handle text input (Step 3) ----
   const handleInitialsChange = (e) => {
     const text = e.target.value.toUpperCase();
     setInitials(text);
@@ -367,7 +366,6 @@ function App() {
     }
   };
 
-  // ---- When fontStyle changes (Step 3) ----
   useEffect(() => {
     if (fontStyle === 'bubble' && initials.length > 0) {
       updateLetterPatchesFromText(initials);
@@ -377,7 +375,6 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fontStyle]);
 
-  // ---- Remove item (main, addon, letter) ----
   const removeItem = (type, index) => {
     if (type === 'main') {
       const newPatches = [...mainPatches];
@@ -394,7 +391,6 @@ function App() {
     }
   };
 
-  // ---- Size & rotation controls ----
   const changeItemSize = (type, index, delta) => {
     const step = 0.02;
     const setter = type === 'main' ? setMainPatches : type === 'addon' ? setAddons : setLetterPatches;
@@ -563,7 +559,6 @@ function App() {
     return { mainPrice, addonTotal, letterPrice, initialsPrice, total };
   };
 
-  // ---- Screenshot preview ----
   const previewScreenshot = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -572,7 +567,6 @@ function App() {
     setShowScreenshot(true);
   };
 
-  // ---- Upload to Cloudinary ----
   const uploadToCloudinary = async (dataURL) => {
     const formData = new FormData();
     formData.append('file', dataURL);
@@ -589,7 +583,6 @@ function App() {
     return data.secure_url;
   };
 
-  // ---- Place Order ----
   const placeOrder = async () => {
     if (!whatsapp || !whatsappConfirm) {
       alert('Please enter your WhatsApp number and confirm it.');
@@ -951,9 +944,8 @@ function App() {
   };
 
   // ---- Render ----
-  if (currentPage === 'waitlist') {
-    return <WaitlistPage />;
-  }
+  if (currentPage === 'waitlist') return <WaitlistPage />;
+  if (currentPage === 'dashboard') return <Dashboard />;
 
   return (
     <>
@@ -977,7 +969,7 @@ function App() {
               <li><a href="#" style={{color:'#ff4f98', fontWeight:600}}>🛠️ Build Your Own</a></li>
             </ul>
           </li>
-          <li><a href="#staff">Staff</a></li>
+          <li><a href="/staff">Staff</a></li>
         </ul>
       </nav>
 

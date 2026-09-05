@@ -90,4 +90,4 @@ function WaitlistPage() {
   );
 }
 
-export default WaitlistPage;
+export default WaitlistPage;    

@@ -31,9 +31,8 @@ function Dashboard() {
   );
   const [broadcastSent, setBroadcastSent] = useState(false);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
-  const [generatedLinks, setGeneratedLinks] = useState([]);
-  const [isSending, setIsSending] = useState(false);
-  const [sendProgress, setSendProgress] = useState({ current: 0, total: 0 });
+  const [broadcastItems, setBroadcastItems] = useState([]); // { whatsapp, number, link, status: 'pending'|'opened'|'sent' }
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   // Check localStorage for broadcast status
   useEffect(() => {
@@ -134,8 +133,8 @@ Thank you for choosing Clog Crafts!`;
       alert('Please enter the live link.');
       return;
     }
-    // Generate wa.me links for each entry
-    const links = waitlist.map((entry) => {
+    // Generate items
+    const items = waitlist.map((entry) => {
       const number = formatWhatsAppNumber(entry.whatsapp);
       const fullMessage = welcomeMessage + liveLink;
       const encoded = encodeURIComponent(fullMessage);
@@ -143,42 +142,60 @@ Thank you for choosing Clog Crafts!`;
         whatsapp: entry.whatsapp,
         number: number,
         link: `https://wa.me/${number}?text=${encoded}`,
+        status: 'pending', // 'pending' | 'opened' | 'sent'
       };
     });
-    setGeneratedLinks(links);
+    setBroadcastItems(items);
+    setCurrentIndex(0);
     setShowBroadcastModal(true);
-    setSendProgress({ current: 0, total: links.length });
   };
 
-  // ---- Send All (opens each link sequentially) ----
-  const sendAll = () => {
-    if (generatedLinks.length === 0) return;
-    setIsSending(true);
-    let index = 0;
-    const total = generatedLinks.length;
+  // ---- Open Next (opens the first pending link) ----
+  const openNext = () => {
+    const nextIndex = broadcastItems.findIndex(item => item.status === 'pending');
+    if (nextIndex === -1) {
+      alert('All links have been opened or sent!');
+      return;
+    }
+    const item = broadcastItems[nextIndex];
+    window.open(item.link, '_blank');
+    // Mark as opened
+    const updated = [...broadcastItems];
+    updated[nextIndex].status = 'opened';
+    setBroadcastItems(updated);
+    setCurrentIndex(nextIndex);
+  };
 
-    const openNext = () => {
-      if (index >= total) {
-        setIsSending(false);
-        localStorage.setItem('broadcastSent', 'true');
-        setBroadcastSent(true);
-        setShowBroadcastModal(false);
-        alert(`✅ All ${total} messages opened. Please click "Send" on each WhatsApp window.`);
-        return;
-      }
-      const item = generatedLinks[index];
-      window.open(item.link, '_blank');
-      setSendProgress({ current: index + 1, total });
-      index++;
-      setTimeout(openNext, 800);
-    };
-
-    openNext();
+  // ---- Mark as Sent (marks the current opened item as sent) ----
+  const markAsSent = () => {
+    if (currentIndex === -1 || currentIndex >= broadcastItems.length) {
+      alert('No item selected.');
+      return;
+    }
+    const item = broadcastItems[currentIndex];
+    if (item.status === 'sent') {
+      alert('Already marked as sent.');
+      return;
+    }
+    const updated = [...broadcastItems];
+    updated[currentIndex].status = 'sent';
+    setBroadcastItems(updated);
+    // Move to next pending automatically
+    const nextPending = updated.findIndex(i => i.status === 'pending');
+    if (nextPending !== -1) {
+      setCurrentIndex(nextPending);
+    } else {
+      // All done – mark broadcast as sent
+      localStorage.setItem('broadcastSent', 'true');
+      setBroadcastSent(true);
+      setShowBroadcastModal(false);
+      alert('✅ All numbers processed! Broadcast marked as sent.');
+    }
   };
 
   // ---- Copy All Links ----
   const copyAllLinks = () => {
-    const allLinks = generatedLinks.map(item => item.link).join('\n');
+    const allLinks = broadcastItems.map(item => item.link).join('\n');
     navigator.clipboard.writeText(allLinks).then(() => {
       alert('All links copied to clipboard!');
     }).catch(() => {
@@ -192,7 +209,7 @@ Thank you for choosing Clog Crafts!`;
     });
   };
 
-  // ---- Confirm Send (just mark as sent) ----
+  // ---- Mark as Sent (bulk) ----
   const confirmSend = () => {
     localStorage.setItem('broadcastSent', 'true');
     setBroadcastSent(true);
@@ -203,8 +220,8 @@ Thank you for choosing Clog Crafts!`;
   const resetBroadcast = () => {
     localStorage.removeItem('broadcastSent');
     setBroadcastSent(false);
-    setGeneratedLinks([]);
-    setIsSending(false);
+    setBroadcastItems([]);
+    setCurrentIndex(0);
   };
 
   // ---- Render login if not authenticated ----
@@ -349,51 +366,49 @@ Thank you for choosing Clog Crafts!`;
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowBroadcastModal(false)}>✕</button>
             <h3>🌐 Broadcast to Waitlist</h3>
-            <p style={{ marginBottom: '12px', color: '#666' }}>
-              {generatedLinks.length} numbers ready. Choose an action:
-            </p>
 
             {/* Message preview */}
-            <div style={{ marginBottom: '16px', background: '#f9f9f9', padding: '12px', borderRadius: '8px', fontSize: '0.9rem' }}>
+            <div style={{ marginBottom: '12px', background: '#f9f9f9', padding: '12px', borderRadius: '8px', fontSize: '0.9rem' }}>
               <strong>Preview message:</strong>
               <div style={{ marginTop: '4px', whiteSpace: 'pre-wrap', color: '#444' }}>
                 {welcomeMessage + liveLink}
               </div>
-              <div style={{ marginTop: '8px', fontSize: '0.8rem', color: '#999' }}>
-                💡 Tip: Avoid emojis for best compatibility on mobile.
-              </div>
             </div>
 
-            {/* Link list */}
-            <div style={{ maxHeight: '160px', overflowY: 'auto', marginBottom: '16px', background: '#f9f9f9', padding: '8px', borderRadius: '8px' }}>
-              {generatedLinks.slice(0, 5).map((item, i) => (
-                <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #eee', fontSize: '0.85rem' }}>
-                  {item.whatsapp} → <a href={item.link} target="_blank" rel="noopener noreferrer">Open</a>
+            {/* Progress summary */}
+            <div style={{ marginBottom: '12px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              <span>Pending: <strong>{broadcastItems.filter(i => i.status === 'pending').length}</strong></span>
+              <span>Opened: <strong>{broadcastItems.filter(i => i.status === 'opened').length}</strong></span>
+              <span>Sent: <strong>{broadcastItems.filter(i => i.status === 'sent').length}</strong></span>
+            </div>
+
+            {/* Link list with status */}
+            <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '16px', background: '#f9f9f9', padding: '8px', borderRadius: '8px' }}>
+              {broadcastItems.map((item, i) => (
+                <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid #eee', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{item.whatsapp}</span>
+                  <span>
+                    {item.status === 'pending' && <span style={{ color: '#f1c40f' }}>⏳ Pending</span>}
+                    {item.status === 'opened' && <span style={{ color: '#3498db' }}>📤 Opened</span>}
+                    {item.status === 'sent' && <span style={{ color: '#2ecc71' }}>✅ Sent</span>}
+                  </span>
                 </div>
               ))}
-              {generatedLinks.length > 5 && <div style={{ color: '#999' }}>... and {generatedLinks.length - 5} more</div>}
             </div>
-
-            {/* Progress (if sending) */}
-            {isSending && (
-              <div style={{ marginBottom: '12px' }}>
-                <progress value={sendProgress.current} max={sendProgress.total} style={{ width: '100%' }} />
-                <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                  Opening {sendProgress.current} of {sendProgress.total}...
-                </div>
-              </div>
-            )}
 
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <button className="btn-primary" onClick={sendAll} disabled={isSending}>
-                {isSending ? 'Sending...' : '🚀 Send All (Open Links)'}
+              <button className="btn-primary" onClick={openNext}>
+                📤 Open Next
+              </button>
+              <button className="btn-secondary" onClick={markAsSent} disabled={currentIndex === -1 || broadcastItems[currentIndex]?.status === 'sent'}>
+                ✅ Mark as Sent
               </button>
               <button className="btn-secondary" onClick={copyAllLinks}>📋 Copy All Links</button>
-              <button className="btn-secondary" onClick={confirmSend}>✅ Mark as Sent</button>
-              <button className="btn-secondary" onClick={() => setShowBroadcastModal(false)}>Cancel</button>
+              <button className="btn-secondary" onClick={confirmSend}>✅ Mark All as Sent</button>
+              <button className="btn-secondary" onClick={() => setShowBroadcastModal(false)}>Close</button>
             </div>
             <p style={{ marginTop: '12px', fontSize: '0.8rem', color: '#999' }}>
-              💡 "Send All" will open each link in a new tab. You'll need to click "Send" on each WhatsApp window.
+              💡 Click "Open Next" to open the next pending link. After sending in WhatsApp, click "Mark as Sent".
             </p>
           </div>
         </div>
